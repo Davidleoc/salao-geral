@@ -1,0 +1,78 @@
+{# Layout do painel do administrador do SaaS (/admin). Estilos: static/css/admin.css #}
+{% extends "base.html" %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-admin.svg" /><link rel="apple-touch-icon" href="/static/img/fav-admin.svg" />{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ asset('css/admin.css') }}" />
+{% endblock %}
+
+{% block body %}
+{% macro item(url, chave, icone, texto) %}
+  <a href="{{ url }}" class="admin-sidebar-item {% if active_page == chave %}active{% endif %}"><span class="icon">{{ icon(icone, 18) }}</span><span>{{ texto }}</span></a>
+{% endmacro %}
+<div class="admin-app-layout">
+
+  <header class="admin-topbar">
+    <a href="/admin" class="admin-brand">
+      <span style="color: var(--brand);">{{ icon('shield', 22) }}</span>
+      <span>MeuAgendamento</span>
+      <span class="admin-brand-badge">SaaS Admin</span>
+    </a>
+
+    <div class="admin-topbar-right">
+      <div class="notif" id="notif" data-ultimo-id="0">
+        <button type="button" class="notif-botao" aria-label="Notificações" title="Notificações">
+          {{ icon('mail', 18) }}<span class="notif-contador" hidden>0</span>
+        </button>
+        <div class="notif-painel" hidden>
+          <div class="notif-cab">Alertas</div>
+          <div class="notif-lista"><div class="notif-vazio">Carregando…</div></div>
+        </div>
+      </div>
+      <div class="admin-user-badge">
+        <div class="admin-avatar">{{ usuario.nome[0] | upper }}</div>
+        <div>
+          <div style="font-weight: 600; line-height: 1.2;">{{ usuario.nome }}</div>
+          <div style="font-size: 0.75rem; color: var(--admin-text-muted);">Administrador do Sistema</div>
+        </div>
+      </div>
+      <form action="/minhaagenda/logout" method="post" style="display:inline; margin: 0;">{{ csrf_input() }}
+        <button type="submit" class="btn-logout">Sair</button>
+      </form>
+    </div>
+  </header>
+
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-section">Gestão da plataforma</div>
+    {{ item('/admin', 'dashboard', 'dashboard', 'Dashboard') }}
+    {{ item('/admin/financeiro', 'financeiro', 'coin', 'Financeiro') }}
+    {{ item('/admin/saloes', 'saloes', 'store', 'Salões') }}
+    {{ item('/admin/assinaturas', 'assinaturas', 'card', 'Assinaturas e cobranças') }}
+    {{ item('/admin/planos', 'planos', 'star', 'Planos e preços') }}
+
+    <hr class="admin-divider">
+    <div class="admin-sidebar-section">Segurança</div>
+    {{ item('/admin/senhas', 'senhas', 'lock', 'Pedidos de nova senha') }}
+    {{ item('/admin/auditoria', 'auditoria', 'list', 'Auditoria') }}
+    {{ item('/minhaagenda/mfa', 'mfa', 'shield-check', 'Segundo fator (MFA)') }}
+
+    <hr class="admin-divider">
+    <div class="admin-sidebar-section">Atalhos</div>
+    <a href="/contratar" target="_blank" class="admin-sidebar-item"><span class="icon">{{ icon('trending', 18) }}</span><span>Página de vendas ↗</span></a>
+  </aside>
+
+  <main class="admin-main-content">
+    {% if mensagem %}
+      <div data-toast-mensagem="{{ mensagem }}" hidden></div>
+      <div class="alert alert-success" style="margin-bottom: 1.75rem;"><span>✓</span><div>{{ mensagem }}</div></div>
+    {% endif %}
+    {% if erro %}
+      <div class="alert alert-danger" style="margin-bottom: 1.75rem;"><span>⚠</span><div>{{ erro }}</div></div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="{{ asset('js/notificacoes.js') }}"></script>
+{% endblock %}

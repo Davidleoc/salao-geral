@@ -1,0 +1,113 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Salões Cadastrados — Admin SaaS{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.75rem; font-weight: 800; color: #1e1b4b; letter-spacing: -0.5px;">Salões Cadastrados</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Gerencie todas as contas de salões, status de funcionamento e planos vinculados.</p>
+  </div>
+</div>
+
+<!-- Barra de Busca e Filtros -->
+<div class="card" style="margin-bottom: 1.75rem; padding: 1.25rem;">
+  <form method="get" action="/admin/saloes" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 250px;">
+      <label class="form-label" style="font-size: 0.8rem;">Buscar por salão, slug, e-mail ou CPF/CNPJ</label>
+      <input type="text" name="busca" value="{{ busca }}" class="form-control" placeholder="Ex: Studio Bella, studio-bella, contato@...">
+    </div>
+
+    <div style="width: 200px;">
+      <label class="form-label" style="font-size: 0.8rem;">Status do Salão</label>
+      <select name="status_filtro" class="form-control">
+        <option value="" {% if not status_filtro %}selected{% endif %}>Todos os Status</option>
+        <option value="ativo" {% if status_filtro == 'ativo' %}selected{% endif %}>Apenas Ativos</option>
+        <option value="inativo" {% if status_filtro == 'inativo' %}selected{% endif %}>Apenas Inativos</option>
+        <option value="teste" {% if status_filtro == 'teste' %}selected{% endif %}>Em teste grátis</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: auto; padding: 0.75rem 1.5rem; background: #7c3aed;">
+      Filtrar
+    </button>
+    {% if busca or status_filtro %}
+      <a href="/admin/saloes" class="btn btn-outline" style="padding: 0.75rem 1.25rem;">Limpar</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Tabela de Salões -->
+<div class="card">
+  {% if saloes %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Salão & Link</th>
+            <th>Contato</th>
+            <th>Plano / Ciclo</th>
+            <th>Status Salão</th>
+            <th>Status Assinatura</th>
+            <th>Cadastro</th>
+            <th style="text-align: right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in saloes %}
+          {% set st = s.assinatura.status.value if s.assinatura else '' %}
+          <tr class="{{ 'linha-teste' if st == 'TESTE' else ('linha-atraso' if st in ('EM_ATRASO', 'SUSPENSO') else '') }}">
+            <td style="font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">#{{ s.id }}</td>
+            <td>
+              <div style="font-weight: 700; color: #1e1b4b; font-size: 0.98rem;">{{ s.nome }}</div>
+              <a href="/{{ s.slug }}" target="_blank" style="font-size: 0.8rem; color: #7c3aed; text-decoration: none;">
+                /{{ s.slug }} ↗
+              </a>
+            </td>
+            <td>
+              <div style="font-size: 0.88rem;">{{ s.email_principal }}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">{{ s.telefone or "-" }}</div>
+            </td>
+            <td>
+              {% if s.assinatura and s.assinatura.plano %}
+                <span class="badge badge-purple">{{ s.assinatura.plano.nome }}</span>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">{{ s.assinatura.periodicidade.value }}</div>
+              {% else %}
+                <span class="badge badge-neutral">Sem plano</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if s.ativo %}
+                <span class="badge badge-success">Ativo</span>
+              {% else %}
+                <span class="badge badge-danger">{{ "Encerrado" if s.encerrado_em else "Bloqueado" }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if s.assinatura %}{% set rot = s.assinatura.status|status_assinatura %}
+                <span class="badge {{ rot[1] }}">{{ rot[0] }}</span>
+                {% if st == 'TESTE' and s.assinatura.data_fim %}<div style="font-size:.76rem; color:#155e75;">até {{ s.assinatura.data_fim.strftime('%d/%m') }}</div>{% endif %}
+              {% else %}<span class="badge badge-neutral">-</span>{% endif %}
+            </td>
+            <td style="font-size: 0.82rem; color: var(--text-muted);">
+              {{ s.criado_em.strftime('%d/%m/%Y') if s.criado_em else '-' }}
+            </td>
+            <td style="text-align: right;">
+              <a href="/admin/saloes/{{ s.id }}" class="btn btn-sm btn-outline" style="padding: 0.35rem 0.85rem; font-size: 0.82rem; border-color: #cbd5e1;">
+                Gerenciar Salão →
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="padding: 3.5rem 1rem; text-align: center; color: var(--text-muted);">
+      <p style="font-size: 1.15rem; font-weight: 600; margin-bottom: 0.5rem;">Nenhum salão encontrado.</p>
+      <p style="font-size: 0.9rem;">Tente ajustar seus filtros de busca ou verifique o cadastro de salões.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

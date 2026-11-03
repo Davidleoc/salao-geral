@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Agendamento Confirmado — {{ salao.nome }}{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-salao.svg" /><link rel="apple-touch-icon" href="/static/img/fav-salao.svg" />{% endblock %}
+
+{% block body %}
+<style>
+  :root { --salon-brand: {{ salao.cor_principal }}; --salon-accent: {{ salao.cor_secundaria }}; }
+  .salon-btn { background: var(--salon-brand); color: white; width: 100%; padding: 1rem; border-radius: 8px; font-size: 1.1rem; border:none; cursor:pointer; text-decoration:none; display:inline-block; text-align:center;}
+</style>
+
+<div style="max-width: 600px; margin: 4rem auto; padding: 2rem; text-align:center; background:var(--surface); border-radius:12px; box-shadow:var(--shadow-lg);">
+  
+  <div style="margin-bottom: 1rem; color: var(--salon-brand);">{{ icon('check-circle', 64, 1.5) }}</div>
+  
+  <h1 style="font-size:2rem; font-weight:800; margin-bottom:1rem; color:var(--salon-brand);">Agendamento Confirmado!</h1>
+  
+  <p style="color:var(--text-muted); margin-bottom: 2rem; font-size:1.1rem;">
+    {{ agendamento.cliente.nome.split()[0] }}, seu horário está marcado.
+  </p>
+
+  <div style="background:var(--surface-2); padding:2rem; border-radius:8px; text-align:left; margin-bottom: 2rem;">
+    <div style="margin-bottom:1rem;">
+      <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Serviço</strong>
+      <div style="font-size:1.2rem; font-weight:600;">{{ agendamento.servico.nome }}</div>
+    </div>
+    
+    <div style="margin-bottom:1rem;">
+      <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Data e Hora</strong>
+      <div style="font-size:1.2rem; font-weight:600;">
+        {{ agendamento.data.strftime('%d/%m/%Y') }} às {{ agendamento.hora_inicio.strftime('%H:%M') }}
+      </div>
+    </div>
+    
+    <div>
+      <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Local</strong>
+      <div style="font-size:1.1rem;">
+        {{ salao.nome }}<br>
+        <span style="font-size:0.9rem; color:var(--text-muted);">{{ salao.endereco }}</span>
+      </div>
+    </div>
+  </div>
+
+  <a href="/{{ salao.slug }}" class="btn-back">← Voltar para o Salão</a>
+
+</div>
+{% endblock %}

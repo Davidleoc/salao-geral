@@ -1,0 +1,41 @@
+{# Botões de ação da assinatura (teste, pagamento, suspensão, cancelamento) — usados em assinaturas.html e salao_detalhe.html #}
+{% macro acoes(a, voltar) %}
+  <div style="display:inline-flex; gap:.4rem; justify-content:flex-end; flex-wrap:wrap;">
+  {% set st = a.status.value %}
+  {% if st == 'TESTE' %}
+    <form action="/admin/assinaturas/{{ a.id }}/renovar-teste" method="post" style="display:inline-flex; gap:.25rem; margin:0;">{{ csrf_input() }}
+      <input type="hidden" name="voltar" value="{{ voltar }}">
+      <input type="number" name="dias" value="7" min="1" max="60" class="form-control" style="width:62px; padding:.3rem .4rem; font-size:.8rem;" title="Dias a mais">
+      <button class="btn btn-sm btn-outline" style="padding:.35rem .7rem; font-size:.8rem;">Estender</button>
+    </form>
+    <form action="/admin/assinaturas/{{ a.id }}/encerrar-teste" method="post" style="display:inline; margin:0;" onsubmit="return confirm('Encerrar o teste agora? O salão é bloqueado até pagar e recebe o Pix por e-mail.');">{{ csrf_input() }}
+      <input type="hidden" name="voltar" value="{{ voltar }}">
+      <button class="btn btn-sm btn-outline" style="padding:.35rem .7rem; font-size:.8rem; color:#b45309;">Encerrar teste</button>
+    </form>
+  {% endif %}
+  {% if st in ('TESTE', 'AGUARDANDO_PAGAMENTO', 'ATIVO', 'EM_ATRASO', 'SUSPENSO') %}
+    <form action="/admin/assinaturas/{{ a.id }}/confirmar-pagamento" method="post" style="display:inline; margin:0;" onsubmit="return confirm('Confirmar o recebimento de R$ {{ (a.valor_cobrado or 0)|brl }} de {{ a.salao.nome|e }}?');">{{ csrf_input() }}
+      <input type="hidden" name="voltar" value="{{ voltar }}">
+      <button class="btn btn-sm btn-primary" style="padding:.35rem .75rem; font-size:.8rem; background:#10b981;" title="Registra o pagamento e avança o vencimento">{{ icon('check', 14) }} Pagamento recebido</button>
+    </form>
+  {% endif %}
+  {% if st == 'AGUARDANDO_PAGAMENTO' %}
+    <form action="/admin/assinaturas/{{ a.id }}/renovar-teste" method="post" style="display:inline; margin:0;">{{ csrf_input() }}
+      <input type="hidden" name="voltar" value="{{ voltar }}"><input type="hidden" name="dias" value="7">
+      <button class="btn btn-sm btn-outline" style="padding:.35rem .7rem; font-size:.8rem;" title="Libera mais 7 dias de teste">+7 dias de teste</button>
+    </form>
+  {% endif %}
+  {% if st in ('ATIVO', 'EM_ATRASO') %}
+    <form action="/admin/assinaturas/{{ a.id }}/suspender" method="post" style="display:inline; margin:0;" onsubmit="return confirm('Suspender e bloquear o salão?');">{{ csrf_input() }}
+      <input type="hidden" name="voltar" value="{{ voltar }}">
+      <button class="btn btn-sm btn-outline" style="padding:.35rem .7rem; font-size:.8rem; color:#d97706;">Suspender</button>
+    </form>
+  {% endif %}
+  {% if st != 'CANCELADO' %}
+    <form action="/admin/assinaturas/{{ a.id }}/cancelar" method="post" style="display:inline; margin:0;" onsubmit="return confirm('Cancelar esta assinatura?');">{{ csrf_input() }}
+      <input type="hidden" name="voltar" value="{{ voltar }}">
+      <button class="btn btn-sm btn-danger" style="padding:.35rem .65rem; font-size:.8rem;">Cancelar</button>
+    </form>
+  {% endif %}
+  </div>
+{% endmacro %}

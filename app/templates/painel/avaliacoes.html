@@ -1,0 +1,84 @@
+{# Avaliações do atendimento — routes/extras.py. Dono e gerente veem; quem configura: configuracoes.editar. #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Avaliações dos clientes — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.75rem;">
+  <h1 style="font-size: 1.5rem; font-weight:800;">Avaliações dos clientes</h1>
+  <p style="color:var(--text-muted);">Notas que os clientes deram depois do atendimento. Só a sua equipe vê.</p>
+</div>
+
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom:1.5rem;">
+  <div class="kpi-card"><div class="kpi-label">Nota média</div>
+    <div class="kpi-value" style="color:#d97706;">{{ '%.1f'|format(media) if media else '—' }}</div>
+    <div class="kpi-sub">{{ total }} avaliação(ões)</div></div>
+  <div class="kpi-card"><div class="kpi-label">Aguardando resposta</div><div class="kpi-value">{{ pendentes }}</div>
+    <div class="kpi-sub">convites enviados</div></div>
+  <div class="kpi-card"><div class="kpi-label">Pedido automático</div>
+    <div class="kpi-value" style="font-size:1.2rem;">{{ 'Ligado' if salao.pedir_avaliacao else 'Desligado' }}</div>
+    <div class="kpi-sub">{{ 'com convite para o Google' if salao.link_avaliacao_google else 'sem link do Google' }}</div></div>
+</div>
+
+<div style="display:grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap:1.5rem; align-items:start;" class="grid-av">
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:1rem;">Últimas avaliações</h2>
+    {% if avaliacoes %}
+      {% for av in avaliacoes %}
+      {% set ag = av.agendamento %}
+      <div style="padding:.9rem 0; border-bottom:1px solid var(--border);">
+        <div style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+          <div><span style="color:#f59e0b; letter-spacing:1px;">{{ '★' * av.nota }}</span><span style="color:#e5e7eb; letter-spacing:1px;">{{ '★' * (5 - av.nota) }}</span>
+            <b style="margin-left:.4rem;">{{ ag.cliente.nome }}</b></div>
+          <span style="font-size:.8rem; color:var(--text-muted);">{{ av.respondido_em.strftime('%d/%m/%Y') }}</span>
+        </div>
+        <div style="font-size:.85rem; color:var(--text-muted);">{{ ag.servico.nome }}{% if ag.profissional %} · {{ ag.profissional.nome }}{% endif %} · <a href="/minhaagenda/agenda/{{ ag.id }}">ver atendimento</a></div>
+        {% if av.comentario %}<p style="margin-top:.4rem;">“{{ av.comentario }}”</p>{% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--text-muted); text-align:center; padding:2rem 0;">Nenhuma avaliação ainda. Ligue o pedido automático ao lado ou gere um link na ficha de um atendimento concluído.</p>
+    {% endif %}
+  </div>
+
+  <div>
+    {% if total %}
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3 class="card-title" style="margin-bottom:.9rem;">Distribuição</h3>
+      {% for n, qtd in distribuicao.items() %}
+      <div style="display:flex; align-items:center; gap:.6rem; font-size:.85rem; margin-bottom:.35rem;">
+        <span style="width:1.5rem;">{{ n }}★</span>
+        <div style="flex:1; height:8px; background:var(--surface-2); border-radius:4px; overflow:hidden;">
+          <div style="width:{{ (qtd / total * 100)|round(0) }}%; height:100%; background:#f59e0b;"></div></div>
+        <span style="width:1.5rem; text-align:right; color:var(--text-muted);">{{ qtd }}</span>
+      </div>
+      {% endfor %}
+      {% if por_profissional|length > 1 %}
+      <h4 style="font-size:.9rem; font-weight:700; margin:1rem 0 .5rem;">Por profissional</h4>
+      {% for nome, (m, q) in por_profissional.items() %}
+        <div style="display:flex; justify-content:space-between; font-size:.85rem; margin-bottom:.25rem;"><span>{{ nome }}</span><span><b>{{ '%.1f'|format(m) }}</b> ({{ q }})</span></div>
+      {% endfor %}
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if pode_configurar %}
+    <div class="card">
+      <h3 class="card-title" style="margin-bottom:.9rem;">Configuração</h3>
+      <form method="post" action="/minhaagenda/avaliacoes/config">{{ csrf_input() }}
+        <label style="display:flex; gap:.6rem; align-items:flex-start; margin-bottom:1rem; font-size:.9rem;">
+          <input type="checkbox" name="pedir_avaliacao" {% if salao.pedir_avaliacao %}checked{% endif %} style="margin-top:.2rem;">
+          <span>Pedir avaliação por e-mail quando o atendimento for marcado como <b>Concluído</b> (para clientes que deixaram e-mail).</span>
+        </label>
+        <div class="form-group">
+          <label class="form-label" for="link_google">Link de avaliação do Google (opcional)</label>
+          <input id="link_google" name="link_avaliacao_google" class="form-control" value="{{ salao.link_avaliacao_google or '' }}" placeholder="https://g.page/r/…/review" maxlength="500">
+          <small class="hint">No Perfil da Empresa no Google, clique em “Pedir avaliações” e copie o link. Quem der 4 ou 5 estrelas recebe o convite para avaliar lá também.</small>
+        </div>
+        <button class="btn btn-primary">Salvar</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+<style>@media (max-width: 860px){ .grid-av{ grid-template-columns: 1fr !important; } }</style>
+{% endblock %}

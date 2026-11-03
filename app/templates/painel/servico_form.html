@@ -1,0 +1,80 @@
+{% extends "painel/painel_base.html" %}
+{% block title %}{% if servico %}Editar Serviço{% else %}Novo Serviço{% endif %} — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:700;">{% if servico %}Editar Serviço{% else %}Novo Serviço{% endif %}</h1>
+    <p style="color:var(--text-muted); font-size:0.95rem;">Preencha os dados do serviço.</p>
+  </div>
+  <a href="/minhaagenda/servicos" class="btn-back">← Voltar</a>
+</div>
+
+<div class="card" style="max-width: 760px;">
+  <form method="post" action="{% if servico %}/minhaagenda/servicos/{{ servico.id }}{% else %}/minhaagenda/servicos/novo{% endif %}">{{ csrf_input() }}
+    
+    <div class="form-group">
+      <label class="form-label" for="nome">Nome do Serviço</label>
+      <input class="form-control" type="text" id="nome" name="nome" value="{{ servico.nome if servico else '' }}" required placeholder="Ex: Corte Feminino" />
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label" for="descricao">Descrição (Opcional)</label>
+      <textarea class="form-control" id="descricao" name="descricao" rows="3" placeholder="Detalhes que o cliente verá">{{ (servico.descricao or '') if servico else '' }}</textarea>
+    </div>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+      <div class="form-group">
+        <label class="form-label" for="preco">Preço cobrado (R$)</label>
+        <input class="form-control" type="text" inputmode="decimal" id="preco" name="preco" value="{{ servico.preco|brl if servico else '' }}" required placeholder="0,00" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="custo">Custo da empresa (R$) <span style="color:var(--text-muted); font-weight:400;">— opcional</span></label>
+        <input class="form-control" type="text" inputmode="decimal" id="custo" name="custo" value="{{ servico.custo|brl if servico and servico.custo is not none else '' }}" placeholder="0,00" />
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="duracao_minutos">Duração (Minutos)</label>
+        <select class="form-control" id="duracao_minutos" name="duracao_minutos" required>
+          <option value="15" {% if servico and servico.duracao_minutos == 15 %}selected{% endif %}>15 minutos</option>
+          <option value="30" {% if servico and servico.duracao_minutos == 30 %}selected{% endif %}>30 minutos</option>
+          <option value="45" {% if servico and servico.duracao_minutos == 45 %}selected{% endif %}>45 minutos</option>
+          <option value="60" {% if (servico and servico.duracao_minutos == 60) or not servico %}selected{% endif %}>1 hora</option>
+          <option value="90" {% if servico and servico.duracao_minutos == 90 %}selected{% endif %}>1h 30m</option>
+          <option value="120" {% if servico and servico.duracao_minutos == 120 %}selected{% endif %}>2 horas</option>
+          <option value="180" {% if servico and servico.duracao_minutos == 180 %}selected{% endif %}>3 horas</option>
+        </select>
+      </div>
+    </div>
+    
+    <div style="background:var(--bg); border:1px dashed var(--border); border-radius:var(--radius-sm); padding:1rem 1.25rem; font-size:.9rem; color:var(--text-muted); line-height:1.6;">
+      <strong style="color:var(--text);">Custo da empresa</strong> é quanto você gasta para prestar o serviço: produtos, materiais descartáveis, comissão do profissional etc.
+      Ele não aparece para o cliente e serve para calcular o <strong style="color:var(--text);">lucro</strong> nos relatórios.
+      <div id="previewLucro" style="margin-top:.6rem; font-weight:700; color:var(--text);"></div>
+    </div>
+
+    <div style="margin-top: 1.5rem; text-align:right;">
+      <button type="submit" class="btn btn-primary" style="width:auto;">Salvar Serviço</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    const num = v => { v = (v || '').replace(/[^0-9,.]/g, ''); if (v.includes(',')) v = v.replace(/\./g, '').replace(',', '.'); return parseFloat(v); };
+    const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const preco = document.getElementById('preco'), custo = document.getElementById('custo'), out = document.getElementById('previewLucro');
+    function atualizar() {
+      const p = num(preco.value), c = num(custo.value);
+      if (isNaN(p)) { out.textContent = ''; return; }
+      const lucro = p - (isNaN(c) ? 0 : c);
+      const margem = p > 0 ? (lucro / p * 100) : 0;
+      out.textContent = `Lucro por atendimento: ${brl(lucro)} (margem de ${margem.toFixed(0)}%)`;
+      out.style.color = lucro < 0 ? 'var(--danger)' : '#15803d';
+    }
+    [preco, custo].forEach(el => el.addEventListener('input', atualizar));
+    atualizar();
+  })();
+</script>
+{% endblock %}

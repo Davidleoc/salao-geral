@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Confirme seu e-mail — {{ salao.nome }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ asset('css/contratar-sucesso.css') }}" />
+{% endblock %}
+
+{% block body %}
+<div class="success-page">
+
+  <div class="success-box" data-rv>
+
+    <div class="success-icon-wrap" style="color:var(--brand);">{{ icon('mail', 34) }}</div>
+
+    {% if com_teste %}
+    <span class="badge badge-success" style="font-size: 0.82rem; padding: 0.35rem 0.9rem; margin-bottom: 0.75rem;">
+      {{ dias_teste }} dias grátis
+    </span>
+    {% else %}
+    <span class="badge badge-warning" style="font-size: 0.82rem; padding: 0.35rem 0.9rem; margin-bottom: 0.75rem;">
+      Aguardando pagamento
+    </span>
+    {% endif %}
+
+    <h1 style="font-size: 2rem; font-weight: 800; color: #111827; letter-spacing: -0.5px; margin-bottom: 0.5rem;">
+      Falta só confirmar seu e-mail
+    </h1>
+
+    <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 540px; margin: 0 auto;">
+      <strong>{{ salao.nome }}</strong> foi cadastrado. Enviamos um link de confirmação para
+      <strong>{{ salao.email_principal }}</strong>.
+      {% if com_teste %}
+        Assim que você clicar nele, seu teste grátis de {{ dias_teste }} dias começa — sem cartão e sem cobrança automática.
+      {% else %}
+        Como este CPF/CNPJ já foi usado em outra conta, o teste grátis não se aplica: enviamos também os dados de pagamento.
+      {% endif %}
+    </p>
+
+    <div style="background: var(--bg); border-radius: 12px; padding: 1.25rem; margin-top: 2rem; text-align: left; font-size: .9rem; display: flex; flex-direction: column; gap: .6rem;">
+      <div style="display: flex; justify-content: space-between; gap: 1rem;">
+        <span style="color: var(--text-muted);">Negócio:</span>
+        <span style="font-weight: 700; color: #1e1b4b;">{{ salao.nome }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; gap: 1rem;">
+        <span style="color: var(--text-muted);">Endereço público:</span>
+        <span style="font-family: var(--mono); font-weight: 600; color: var(--brand);">/{{ salao.slug }}</span>
+      </div>
+      {% if plano %}
+      <div style="display: flex; justify-content: space-between; gap: 1rem;">
+        <span style="color: var(--text-muted);">Plano:</span>
+        <span>Plano {{ plano.nome }} ({{ "Anual" if assinatura.periodicidade.value == "ANUAL" else "Mensal" }})</span>
+      </div>
+      {% endif %}
+      <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: .5rem;">
+        <span style="color: var(--text-muted); font-weight: 600;">{{ 'Valor depois do teste:' if com_teste else 'Valor a pagar:' }}</span>
+        <span style="font-size: 1.25rem; font-weight: 800; color: #166534;">R$ {{ valor_cobrado|brl }}</span>
+      </div>
+    </div>
+
+    <div style="text-align: left; margin-top: 1.75rem;">
+      <h4 style="font-size: .95rem; font-weight: 700; color: #111827; margin-bottom: .5rem;">O que acontece agora?</h4>
+      <ol class="steps-list">
+        <li>Abra o e-mail e clique em <strong>Confirmar meu e-mail</strong> (o link vale por 3 dias).</li>
+        {% if com_teste %}
+        <li>Seu acesso fica liberado na hora e o teste de {{ dias_teste }} dias começa a contar.</li>
+        <li>Faltando 5 dias para o fim do teste, avisamos por e-mail como continuar (Pix).</li>
+        <li>Se não quiser continuar, é só não pagar: nada é cobrado automaticamente.</li>
+        {% else %}
+        <li>Pague o Pix enviado por e-mail pelo app do seu banco.</li>
+        <li>Assim que confirmarmos o pagamento, seu acesso fica <strong>Ativo</strong>.</li>
+        {% endif %}
+      </ol>
+      <p style="font-size: .82rem; color: var(--text-muted); margin: .75rem 0 0; line-height: 1.55;">
+        Não encontrou o e-mail? Confira a caixa de spam ou promoções. Na tela de login há a opção de reenviar o link.
+      </p>
+    </div>
+
+    <div style="margin-top: 2.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="/minhaagenda/login" class="btn btn-primary" style="width: auto; padding: .85rem 2rem;">Ir para a tela de login</a>
+      <a href="/contratar" class="btn-back">← Voltar à página inicial</a>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

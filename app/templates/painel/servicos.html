@@ -1,0 +1,83 @@
+{% extends "painel/painel_base.html" %}
+{% block title %}Serviços — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:700;">Meus Serviços</h1>
+    <p style="color:var(--text-muted); font-size:0.95rem;">Gerencie os serviços oferecidos no salão.</p>
+  </div>
+  {% if pode_criar %}
+    <a href="/minhaagenda/servicos/novo" class="btn btn-primary">+ Novo Serviço</a>
+  {% else %}
+    <button class="btn btn-primary" disabled title="Limite do plano atingido">Limite Atingido</button>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Catálogo ({{ total_ativos }} ativos)</h2>
+  </div>
+  
+  {% if servicos %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Serviço</th>
+            <th>Preço</th>
+            <th>Custo</th>
+            <th>Lucro</th>
+            <th>Duração</th>
+            <th>Status</th>
+            <th style="text-align:right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for servico in servicos %}
+          <tr style="{% if not servico.ativo %}opacity: 0.6;{% endif %}">
+            <td>
+              <div style="font-weight:600; color:var(--text);">{{ servico.nome }}</div>
+              {% if servico.descricao %}
+              <div style="font-size:0.8rem; color:var(--text-muted); max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                {{ servico.descricao }}
+              </div>
+              {% endif %}
+            </td>
+            <td style="font-weight:500;">R$ {{ servico.preco|brl }}</td>
+            <td style="color:var(--text-muted);">{{ ("R$ " ~ servico.custo|brl) if servico.custo is not none else "—" }}</td>
+            {% set lucro_srv = servico.preco - (servico.custo or 0) %}
+            <td style="font-weight:600; color:{{ 'var(--danger)' if lucro_srv < 0 else '#15803d' }};">R$ {{ lucro_srv|brl }}</td>
+            <td>{{ servico.duracao_minutos }} min</td>
+            <td>
+              {% if servico.ativo %}
+                <span class="badge badge-success">Ativo</span>
+              {% else %}
+                <span class="badge badge-neutral">Desativado</span>
+              {% endif %}
+            </td>
+            <td style="text-align:right;">
+              <form action="/minhaagenda/servicos/{{ servico.id }}/toggle" method="post" style="display:inline; margin-right:8px;">{{ csrf_input() }}
+                {% if servico.ativo %}
+                  <button type="submit" class="btn btn-sm btn-outline" style="color:var(--danger); border-color:var(--border);">Desativar</button>
+                {% else %}
+                  <button type="submit" class="btn btn-sm btn-outline" style="color:var(--success); border-color:var(--border);">Ativar</button>
+                {% endif %}
+              </form>
+              <a href="/minhaagenda/servicos/{{ servico.id }}" class="btn btn-sm btn-outline">Editar</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">
+      <p style="margin-bottom:1rem;">Nenhum serviço cadastrado.</p>
+      {% if pode_criar %}
+        <a href="/minhaagenda/servicos/novo" class="btn btn-primary">Criar meu primeiro serviço</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{# Aceite do convite para a equipe — routes/equipe.py (aceitar_convite) #}
+{% extends "base.html" %}
+{% block title %}Convite para a equipe — MeuAgendamento{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-login.svg" />{% endblock %}
+
+{% block body %}
+<div class="auth-layout">
+  <div class="auth-brand">
+    <div class="auth-brand-logo" style="display:flex;align-items:center;gap:.55rem;"><span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;">{{ icon('users',20) }}</span> MeuAgendamento</div>
+    {% if convite %}
+      <div class="auth-brand-tagline">Bem-vindo à equipe do {{ convite.salao.nome }}</div>
+      <p class="auth-brand-sub">Crie seu acesso para ver sua agenda, seus clientes do dia e seus ganhos.</p>
+    {% else %}
+      <div class="auth-brand-tagline">Convite indisponível</div>
+    {% endif %}
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-form-box">
+      {% if not convite %}
+        <h1>Este convite não vale mais</h1>
+        <p class="subtitle">O link pode ter expirado, já ter sido usado ou ter sido cancelado. Peça um novo convite para quem administra o salão.</p>
+        <a href="/minhaagenda/login" class="btn-back">← Ir para o login</a>
+      {% else %}
+        <h1>Criar meu acesso</h1>
+        <p class="subtitle">Função: <b>{{ rotulos[convite.papel] }}</b></p>
+        {% if erro %}<div class="alert alert-danger">⚠ {{ erro }}</div>{% endif %}
+        <form method="post" action="/convite/{{ token }}" autocomplete="off">{{ csrf_input() }}
+          <div class="form-group"><label class="form-label">E-mail</label>
+            <input class="form-control" value="{{ convite.email }}" disabled style="background:var(--surface-2);">
+            <small style="color:var(--text-muted);">Este convite vale só para este e-mail.</small></div>
+          <div class="form-group"><label class="form-label" for="c_nome">Nome completo</label>
+            <input class="form-control" id="c_nome" name="nome" required autocomplete="name"></div>
+          <div class="form-group"><label class="form-label" for="c_esp">O que você faz <span style="color:var(--text-muted); font-weight:400;">(opcional)</span></label>
+            <input class="form-control" id="c_esp" name="especialidade" placeholder="Ex: Cabeleireira, Barbeiro, Manicure"></div>
+          <div class="form-group"><label class="form-label" for="c_senha">Crie uma senha</label>
+            <input class="form-control" type="password" id="c_senha" name="senha" required minlength="8" autocomplete="new-password" placeholder="8+ caracteres, letras e números"></div>
+          <div class="form-group"><label class="form-label" for="c_conf">Confirme a senha</label>
+            <input class="form-control" type="password" id="c_conf" name="confirmar_senha" required minlength="8" autocomplete="new-password"></div>
+          <label style="display:flex; gap:.5rem; align-items:flex-start; font-size:.88rem; margin-bottom:1rem;">
+            <input type="checkbox" name="aceite_termos" required style="margin-top:3px;">
+            <span>Li e aceito os <a href="/termos" target="_blank" style="color:var(--brand);">Termos de Uso e a Política de Privacidade</a>.</span>
+          </label>
+          <button type="submit" class="btn btn-primary">Criar acesso</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Termos de Uso e Política de Privacidade — MeuAgendamento{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ asset('css/termos.css') }}" />
+{% endblock %}
+
+{% block body %}
+<div class="terms-page">
+  <header class="terms-nav">
+    <a href="/contratar" class="terms-brand"><img src="/static/img/favicon.svg" alt="" width="30" height="30"> MeuAgendamento</a>
+    <a href="javascript:history.length > 1 ? history.back() : location.assign('/contratar')" class="btn-back">← Voltar</a>
+  </header>
+
+  <div class="terms-layout">
+    <nav class="terms-toc" aria-label="Sumário">
+      <strong style="display:block; margin-bottom:.5rem; color:#111827;">Sumário</strong>
+      <a href="#s1">1. Aceitação</a>
+      <a href="#s2">2. Definições</a>
+      <a href="#s3">3. Dados tratados</a>
+      <a href="#s4">4. Papéis na LGPD</a>
+      <a href="#s5">5. Finalidades e bases legais</a>
+      <a href="#s6">6. Acesso do administrador</a>
+      <a href="#s7">7. Segurança</a>
+      <a href="#s8">8. Compartilhamento</a>
+      <a href="#s9">9. Retenção e exclusão</a>
+      <a href="#s10">10. Seus direitos</a>
+      <a href="#s11">11. Avaliações públicas</a>
+      <a href="#s12">12. Obrigações do contratante</a>
+      <a href="#s13">13. Pagamento e cancelamento</a>
+      <a href="#clientes-finais">14. Clientes finais</a>
+      <a href="#s15">15. Alterações e contato</a>
+    </nav>
+
+    <article class="terms-doc">
+      <h1>Termos de Uso e Política de Privacidade</h1>
+      <p style="color:var(--text-muted);">Última atualização: 16 de outubro de 2026</p>
+
+      <p>Este documento explica, de forma clara, as regras de uso do sistema <strong>MeuAgendamento</strong> e como tratamos dados pessoais, em conformidade com a <strong>Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD)</strong> e com o Marco Civil da Internet (Lei nº 12.965/2014).</p>
+
+      <h2 id="s1">1. Aceitação</h2>
+      <p>Ao contratar ou usar o MeuAgendamento, você declara que leu, entendeu e concorda com estes Termos. Se não concordar, não utilize o sistema. O aceite é registrado com data e hora no momento do cadastro.</p>
+
+      <h2 id="s2">2. Definições</h2>
+      <ul>
+        <li><strong>Contratante:</strong> pessoa ou empresa que assina um plano para gerenciar seu negócio (salão, barbearia, estúdio, clínica etc.).</li>
+        <li><strong>Cliente final:</strong> pessoa que agenda um horário com o Contratante pela página pública ou é cadastrada por ele.</li>
+        <li><strong>Administrador do sistema:</strong> equipe responsável por manter, dar suporte e operar a plataforma MeuAgendamento.</li>
+      </ul>
+
+      <h2 id="s3">3. Quais dados tratamos</h2>
+      <ul>
+        <li><strong>Do Contratante:</strong> nome, e-mail, telefone, <strong>CPF ou CNPJ</strong> (usado apenas para cobrança e recibos), dados do negócio (nome, endereço, contatos, cores, logo, textos e fotos), senha (armazenada apenas de forma criptografada) e dados da assinatura.</li>
+        <li><strong>Dados do negócio inseridos no sistema:</strong> serviços, preços, <strong>custos dos serviços</strong>, agendamentos, valores recebidos, formas de pagamento e relatórios de faturamento e lucro (“dados de vendas e custos”).</li>
+        <li><strong>Da equipe do Contratante</strong> (gerentes e funcionários convidados): nome, e-mail, especialidade, foto (opcional), percentual de comissão e agenda de atendimentos.</li>
+        <li><strong>Dos Clientes finais:</strong> nome, telefone/WhatsApp, e-mail (opcional), observações, histórico de agendamentos, pacotes comprados, pedidos de lista de espera e avaliações de atendimento.</li>
+        <li><strong>Dados técnicos e de segurança:</strong> endereço IP, navegador, data e hora de acessos e tentativas de login, mantidos para segurança e cumprimento do Marco Civil da Internet.</li>
+      </ul>
+
+      <h2 id="s4">4. Papéis na LGPD</h2>
+      <p>Em relação aos dados do <strong>Contratante</strong>, o MeuAgendamento atua como <strong>controlador</strong>.</p>
+      <p>Em relação aos dados dos <strong>Clientes finais</strong> e aos dados de vendas e custos do negócio, o <strong>Contratante é o controlador</strong> e o MeuAgendamento atua como <strong>operador</strong>, tratando esses dados somente para prestar o serviço contratado e conforme as instruções do Contratante.</p>
+
+      <h2 id="s5">5. Finalidades e bases legais</h2>
+      <ul>
+        <li><strong>Prestar o serviço</strong> (agenda, página pública, notificações, relatórios): execução de contrato (art. 7º, V, da LGPD).</li>
+        <li><strong>Cobrança da assinatura e obrigações fiscais:</strong> execução de contrato e cumprimento de obrigação legal (art. 7º, II e V).</li>
+        <li><strong>Segurança, prevenção a fraudes e registros de acesso:</strong> cumprimento de obrigação legal e legítimo interesse (art. 7º, II e IX).</li>
+      </ul>
+      <p>Não usamos os dados para nenhuma finalidade diferente das descritas aqui.</p>
+
+      <h2 id="s6">6. Acesso do administrador do sistema aos dados de vendas e custos</h2>
+      <div class="terms-highlight">
+        <p><strong>Transparência:</strong> o Contratante está ciente e concorda que o <strong>administrador do sistema tem acesso técnico aos dados de vendas e custos</strong> do negócio (agendamentos, valores, formas de pagamento, custos cadastrados e relatórios).</p>
+        <p>Esse acesso existe <strong>exclusivamente para garantir o funcionamento do sistema</strong>, por exemplo para:</p>
+        <ul>
+          <li>dar suporte quando o Contratante solicitar ajuda;</li>
+          <li>identificar e corrigir erros, falhas ou inconsistências nos cálculos e relatórios;</li>
+          <li>verificar a integridade e a disponibilidade do banco de dados e fazer cópias de segurança (backup);</li>
+          <li>administrar a assinatura do plano contratado.</li>
+        </ul>
+        <p>Sempre que o suporte abre os dados de um negócio, isso fica <strong>registrado e visível para o Contratante</strong> em “Assinatura e dados → Acessos do suporte”. Todas as ações do administrador ficam em registro de auditoria.</p>
+        <p style="margin-bottom:0;"><strong>Esses dados não são utilizados para nada além disso.</strong> Eles não são vendidos, alugados ou compartilhados com terceiros, não são usados para publicidade, análises de mercado, comparação entre negócios ou qualquer benefício próprio. Ficam <strong>guardados com segurança no banco de dados</strong> com o único objetivo de serem <strong>disponibilizados ao próprio Contratante</strong>, no painel e nos relatórios dele.</p>
+      </div>
+
+      <h2 id="s7">7. Segurança</h2>
+      <ul>
+        <li>Senhas armazenadas com criptografia forte (Argon2id). Ninguém, nem o administrador do sistema, consegue ver sua senha.</li>
+        <li>Dados de cada negócio isolados: um Contratante nunca acessa dados de outro.</li>
+        <li>Confirmação de e-mail no cadastro, verificação em duas etapas (MFA) disponível com o segredo guardado criptografado, limite de tentativas por endereço IP, proteção contra envio de formulários por sites de terceiros (CSRF) e registro de eventos de segurança.</li>
+        <li>Links de convite, de nova senha e de avaliação são pessoais, expiram e só funcionam uma vez. O administrador do sistema nunca vê nem escolhe senhas.</li>
+        <li>Acesso administrativo restrito a pessoas autorizadas e sujeitas a dever de confidencialidade.</li>
+      </ul>
+      <p>Em caso de incidente de segurança que possa causar risco ou dano relevante, comunicaremos os afetados e a Autoridade Nacional de Proteção de Dados (ANPD), nos termos do art. 48 da LGPD.</p>
+
+      <h2 id="s8">8. Compartilhamento</h2>
+      <p>Os dados não são compartilhados, exceto: (a) com fornecedores essenciais à operação, como hospedagem e envio de e-mails, que só podem usá-los para prestar esse serviço; (b) por obrigação legal ou ordem judicial.</p>
+
+      <h2 id="s9">9. Retenção e exclusão</h2>
+      <ul>
+        <li><strong>Baixar meus dados:</strong> em todos os planos, o Contratante pode baixar a qualquer momento uma cópia completa (JSON e planilhas CSV) em “Assinatura e dados”.</li>
+        <li><strong>Encerrar a conta:</strong> o próprio Contratante encerra a conta no painel. A página sai do ar na hora e os dados ficam guardados por 30 dias (para o caso de arrependimento). Depois, os dados pessoais de clientes e da equipe são apagados ou anonimizados; ficam apenas valores e datas de atendimentos, sem identificação, pelo prazo exigido pela legislação fiscal.</li>
+        <li><strong>Retenção automática:</strong> registros de acesso e auditoria são apagados após 6 meses (Marco Civil da Internet); clientes finais sem nenhum atendimento há 24 meses são anonimizados automaticamente; pedidos de lista de espera são apagados 30 dias após a data pedida.</li>
+      </ul>
+
+      <h2 id="s10">10. Seus direitos como titular</h2>
+      <p>Conforme o art. 18 da LGPD, você pode solicitar a qualquer momento: confirmação da existência de tratamento; acesso aos dados; correção de dados incompletos ou desatualizados; anonimização, bloqueio ou eliminação de dados desnecessários; portabilidade; informação sobre compartilhamentos; e revogação do consentimento, quando aplicável.</p>
+      <p>Clientes finais devem fazer suas solicitações primeiro ao negócio onde agendaram (o controlador). O MeuAgendamento auxiliará o Contratante a atendê-las.</p>
+
+      <h2 id="s11">11. Avaliações públicas</h2>
+      <p>Contratantes ativos ou antigos podem avaliar o sistema. Na avaliação publicada aparecem apenas o <strong>nome do negócio</strong>, a cidade (se cadastrada), a nota e o comentário. <strong>O e-mail usado para validar a avaliação nunca é exibido.</strong></p>
+
+      <h2 id="s12">12. Obrigações do contratante</h2>
+      <ul>
+        <li>Manter seus dados de acesso em sigilo e informar imediatamente qualquer uso indevido.</li>
+        <li>Inserir apenas dados verdadeiros e ter base legal para tratar os dados dos seus clientes finais, informando-os sobre esse tratamento.</li>
+        <li>Não usar o sistema para fins ilícitos, envio de spam ou conteúdo ofensivo.</li>
+      </ul>
+
+      <h2 id="s13">13. Pagamento e cancelamento</h2>
+      <ul>
+        <li><strong>Teste grátis:</strong> 12 dias, contados a partir da confirmação do e-mail, sem cartão e sem cobrança automática. O teste é concedido uma vez por CPF/CNPJ.</li>
+        <li><strong>Cobrança:</strong> por Pix. Avisamos por e-mail a partir de 5 dias antes do vencimento (todos os dias até o pagamento) e no dia do vencimento.</li>
+        <li><strong>Atraso:</strong> após o vencimento, enviamos avisos diários; depois de 7 dias de atraso o acesso é suspenso até a regularização. Nenhum dado é apagado por causa da suspensão.</li>
+        <li>Não há fidelidade nem multa por cancelamento.</li>
+      </ul>
+
+      <h2 id="clientes-finais">14. Clientes finais (quem agenda)</h2>
+      <p>Quando você agenda um horário pela página de um negócio que usa o MeuAgendamento:</p>
+      <ul>
+        <li>O <strong>negócio é o responsável</strong> (controlador) pelos seus dados; o MeuAgendamento só os guarda e processa para ele.</li>
+        <li>Usamos seu nome e WhatsApp para identificar e confirmar o agendamento, e o e-mail (opcional) para enviar confirmação, lembrete e, se o negócio ativar, um pedido de avaliação do atendimento.</li>
+        <li>Na <strong>lista de espera</strong>, seus dados servem só para avisar que um horário abriu naquele dia, e são apagados depois.</li>
+        <li>A <strong>avaliação do atendimento</strong> é vista apenas pela equipe do negócio. Se você der nota alta, pode ser convidado a avaliar também no Google — isso é opcional e feito diretamente no Google.</li>
+        <li>Profissionais do negócio podem ver seus horários no calendário do celular (Google Agenda), com seu primeiro nome e o serviço.</li>
+        <li>Para acessar, corrigir ou apagar seus dados, fale com o negócio onde agendou ou escreva para o e-mail abaixo.</li>
+      </ul>
+
+      <h2 id="s15">15. Alterações e contato</h2>
+      <p>Estes Termos podem ser atualizados. Alterações relevantes serão comunicadas por e-mail ou no painel com antecedência razoável.</p>
+      <p>Dúvidas, solicitações sobre dados pessoais ou contato com o Encarregado de Dados (DPO): <strong>privacidade@meuagendamento.com.br</strong>.</p>
+      <p>Fica eleito o foro do domicílio do Contratante para resolver eventuais conflitos, conforme a legislação de defesa do consumidor quando aplicável.</p>
+    </article>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Recuperar Senha — MeuAgendamento{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-login.svg" /><link rel="apple-touch-icon" href="/static/img/fav-login.svg" />{% endblock %}
+
+{% block body %}
+<div class="auth-layout">
+
+  <div class="auth-brand">
+    <div class="auth-brand-logo" style="display:flex;align-items:center;gap:.55rem;"><span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;">{{ icon('scissors',20) }}</span> MeuAgendamento</div>
+    <div class="auth-brand-tagline">Recuperação de senha</div>
+    <p class="auth-brand-sub">
+      Por segurança, cada pedido é conferido pela nossa equipe. Depois disso, você recebe no
+      e-mail cadastrado um link de uso único para criar a nova senha.
+    </p>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-form-box">
+
+      <h1>Recuperar senha</h1>
+      <p class="subtitle">Insira o e-mail da sua conta</p>
+
+      {% if mensagem %}
+      <div class="alert alert-success">✓ {{ mensagem }}</div>
+      {% endif %}
+
+      {% if erro %}
+      <div class="alert alert-danger">⚠ {{ erro }}</div>
+      {% endif %}
+
+      {% if not mensagem %}
+      <form method="post" action="/minhaagenda/recuperar-senha">{{ csrf_input() }}
+        <div class="form-group">
+          <label class="form-label" for="email">E-mail</label>
+          <input
+            class="form-control"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="seu@email.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top:.5rem">
+          Pedir nova senha
+        </button>
+      </form>
+      {% endif %}
+
+      <div class="auth-links">
+        <a href="/minhaagenda/login" class="btn-back">← Voltar ao login</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

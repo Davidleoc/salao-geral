@@ -1,0 +1,206 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Dashboard Administrativo — SaaS{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.75rem; font-weight: 800; color: #1e1b4b; letter-spacing: -0.5px;">Dashboard Geral do SaaS</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Visão executiva da plataforma, faturamento mensal recorrente (MRR) e salões.</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <a href="/admin/assinaturas?status_filtro=AGUARDANDO_PAGAMENTO" class="btn btn-primary" style="width: auto; padding: 0.65rem 1.25rem; font-size: 0.9rem; background: #7c3aed;">
+      Assinaturas pendentes ({{ aguardando_pagamento }})
+    </a>
+    <a href="/admin/planos/novo" class="btn btn-outline" style="padding: 0.65rem 1.25rem; font-size: 0.9rem;">
+      <span>+</span> Novo Plano
+    </a>
+  </div>
+</div>
+
+<!-- Grid de KPIs Principais -->
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 2rem;">
+  <div class="kpi-card" style="border-left: 4px solid #10b981;">
+    <div class="kpi-label">Salões Ativos</div>
+    <div class="kpi-value" style="color: #065f46;">{{ total_saloes_ativos }}</div>
+    <div class="kpi-sub">de {{ total_saloes }} salões cadastrados</div>
+  </div>
+
+  <div class="kpi-card" style="border-left: 4px solid #7c3aed;">
+    <div class="kpi-label">Faturamento MRR</div>
+    <div class="kpi-value" style="color: #5b21b6;">R$ {{ mrr|brl }}</div>
+    <div class="kpi-sub">Receita mensal recorrente estimada</div>
+  </div>
+
+  <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
+    <div class="kpi-label">Assinaturas Ativas</div>
+    <div class="kpi-value" style="color: #1e40af;">{{ assinaturas_ativas }}</div>
+    <div class="kpi-sub">de {{ total_assinaturas }} no histórico total</div>
+  </div>
+
+  <div class="kpi-card" style="border-left: 4px solid #f59e0b;">
+    <div class="kpi-label">Aguardando Pagamento</div>
+    <div class="kpi-value" style="color: #b45309;">{{ aguardando_pagamento }}</div>
+    <div class="kpi-sub">Requer confirmação manual</div>
+  </div>
+
+  <a href="/admin/assinaturas?status_filtro=TESTE" class="kpi-card" style="border-left: 4px solid #06b6d4; text-decoration:none; color:inherit;">
+    <div class="kpi-label">Em teste grátis</div>
+    <div class="kpi-value" style="color: #155e75;">{{ em_teste }}</div>
+    <div class="kpi-sub">Encerrar ou estender na lista</div>
+  </a>
+
+  <a href="/admin/financeiro" class="kpi-card" style="border-left: 4px solid #ef4444; text-decoration:none; color:inherit;">
+    <div class="kpi-label">Em atraso</div>
+    <div class="kpi-value" style="color: #b91c1c;">{{ em_atraso }}</div>
+    <div class="kpi-sub">Suspensão automática após a tolerância</div>
+  </a>
+
+  {% if pedidos_senha %}
+  <a href="/admin/senhas" class="kpi-card" style="border-left: 4px solid #7c3aed; text-decoration:none; color:inherit;">
+    <div class="kpi-label">Pedidos de nova senha</div>
+    <div class="kpi-value" style="color: #5b21b6;">{{ pedidos_senha }}</div>
+    <div class="kpi-sub">Aguardando você enviar o link</div>
+  </a>
+  {% endif %}
+</div>
+
+<!-- Layout em duas colunas -->
+<div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1.75rem;">
+
+  <!-- Coluna 1: Assinaturas Recentes -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title" style="font-size: 1.1rem;">Últimas Assinaturas</h2>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">Movimentações e contratos recentes</span>
+      </div>
+      <a href="/admin/assinaturas" style="font-size: 0.85rem; color: #7c3aed; text-decoration: none; font-weight: 600;">Ver todas →</a>
+    </div>
+
+    {% if recentes_assinaturas %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Salão</th>
+              <th>Plano</th>
+              <th>Ciclo</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th style="text-align: right;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in recentes_assinaturas %}
+            <tr>
+              <td>
+                <div style="font-weight: 600; color: #1e1b4b;">{{ a.salao.nome if a.salao else "Salão #" ~ a.salao_id }}</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">/{{ a.salao.slug if a.salao else "" }}</div>
+              </td>
+              <td>
+                <span class="badge badge-purple">{{ a.plano.nome if a.plano else "Plano #" ~ a.plano_id }}</span>
+              </td>
+              <td>
+                <span style="font-size: 0.82rem; font-weight: 500;">{{ a.periodicidade.value }}</span>
+              </td>
+              <td style="font-weight: 600;">
+                R$ {{ "%.2f"|format(a.valor_cobrado or 0) }}
+              </td>
+              <td>
+                {% if a.status.value == 'ATIVO' %}
+                  <span class="badge badge-success">Ativo</span>
+                {% elif a.status.value == 'AGUARDANDO_PAGAMENTO' %}
+                  <span class="badge badge-warning">Aguardando</span>
+                {% elif a.status.value == 'PAGO' %}
+                  <span class="badge badge-info">Pago</span>
+                {% elif a.status.value == 'SUSPENSO' %}
+                  <span class="badge badge-danger">Suspenso</span>
+                {% else %}
+                  <span class="badge badge-neutral">{{ a.status.value }}</span>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.82rem; color: var(--text-muted);">
+                {{ a.criado_em.strftime('%d/%m/%Y') if a.criado_em else '-' }}
+              </td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 0.35rem;">
+                  {% if a.status.value == 'AGUARDANDO_PAGAMENTO' %}
+                    <form action="/admin/assinaturas/{{ a.id }}/confirmar-pagamento" method="post" style="display: inline; margin: 0;">{{ csrf_input() }}
+                      <button type="submit" class="btn btn-sm btn-primary" style="width: auto; padding: 0.25rem 0.6rem; font-size: 0.75rem; background: #10b981;" title="Confirmar Pagamento e Ativar">
+                        Aprovar
+                      </button>
+                    </form>
+                  {% endif %}
+                  <a href="/admin/saloes/{{ a.salao_id }}" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.55rem; font-size: 0.75rem;" title="Ver Detalhes do Salão">
+                    Ver
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 2.5rem 1rem; text-align: center; color: var(--text-muted);">
+        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Nenhuma assinatura registrada ainda.</p>
+        <p style="font-size: 0.85rem;">Divulgue o link público de contratação para receber novos clientes.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Coluna 2: Salões Recentes -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title" style="font-size: 1.1rem;">Salões Recentes</h2>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">Últimos cadastros realizados</span>
+      </div>
+      <a href="/admin/saloes" style="font-size: 0.85rem; color: #7c3aed; text-decoration: none; font-weight: 600;">Ver todos →</a>
+    </div>
+
+    {% if recentes_saloes %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Salão</th>
+              <th>Status</th>
+              <th style="text-align: right;">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in recentes_saloes %}
+            <tr>
+              <td>
+                <div style="font-weight: 600; color: #1e1b4b;">{{ s.nome }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">{{ s.email_principal }}</div>
+              </td>
+              <td>
+                {% if s.ativo %}
+                  <span class="badge badge-success">Ativo</span>
+                {% else %}
+                  <span class="badge badge-warning">Inativo</span>
+                {% endif %}
+              </td>
+              <td style="text-align: right;">
+                <a href="/admin/saloes/{{ s.id }}" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                  Detalhes
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 2.5rem 1rem; text-align: center; color: var(--text-muted);">
+        <p>Nenhum salão cadastrado.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

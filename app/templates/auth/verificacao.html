@@ -1,0 +1,30 @@
+{# Confirmação de e-mail e reenvio do link — routes/auth.py #}
+{% extends "base.html" %}
+{% block title %}Confirmação de e-mail — MeuAgendamento{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-login.svg" />{% endblock %}
+
+{% block body %}
+<div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem 1rem; background:var(--bg);">
+  <div class="card" style="max-width:460px; width:100%; padding:2.25rem 2rem; text-align:center;">
+    <div style="width:56px; height:56px; margin:0 auto 1rem; border-radius:50%; display:flex; align-items:center; justify-content:center;
+                background:{{ '#dcfce7' if ok else 'var(--brand-light)' }}; color:{{ '#15803d' if ok else 'var(--brand)' }};">
+      {{ icon('check-circle' if ok else 'mail', 28) }}
+    </div>
+    {% if ok %}
+      <h1 style="font-size:1.4rem; font-weight:800; margin-bottom:.5rem;">Tudo certo!</h1>
+      <p style="color:var(--text-muted); margin-bottom:1.5rem;">{{ mensagem }}</p>
+      <a href="/minhaagenda/login" class="btn btn-primary">Ir para o login</a>
+    {% else %}
+      <h1 style="font-size:1.4rem; font-weight:800; margin-bottom:.5rem;">Confirmar e-mail</h1>
+      {% if mensagem %}<div class="alert {{ 'alert-danger' if ok == false else 'alert-success' }}" style="text-align:left;">{{ mensagem }}</div>{% endif %}
+      <p style="color:var(--text-muted); margin-bottom:1rem; font-size:.92rem;">Não recebeu o link? Confira o spam ou peça um novo:</p>
+      <form method="post" action="/reenviar-verificacao" style="text-align:left;">{{ csrf_input() }}
+        <div class="form-group"><label class="form-label" for="v_email">E-mail cadastrado</label>
+          <input class="form-control" type="email" id="v_email" name="email" required autocomplete="email"></div>
+        <button class="btn btn-primary">Enviar novo link</button>
+      </form>
+      <div style="margin-top:1rem;"><a href="/minhaagenda/login" class="btn-back">← Voltar ao login</a></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

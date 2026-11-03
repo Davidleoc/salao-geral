@@ -1,0 +1,87 @@
+{# Perfil da pessoa logada: dados, foto, senha, segundo fator e calendário — routes/equipe.py #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Meu perfil — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<h1 style="font-size:1.5rem; font-weight:800; margin-bottom:.35rem;">Meu perfil</h1>
+<p style="color:var(--text-muted); margin-bottom:1.75rem;">Seu nome, especialidade e foto aparecem para os clientes na hora de escolher o profissional.</p>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem; align-items:start;">
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:1rem;">Dados</h2>
+    <form method="post" action="/minhaagenda/perfil">{{ csrf_input() }}
+      <div class="form-group"><label class="form-label" for="p_nome">Nome</label>
+        <input class="form-control" id="p_nome" name="nome" value="{{ usuario.nome }}" required></div>
+      <div class="form-group"><label class="form-label" for="p_esp">O que você faz</label>
+        <input class="form-control" id="p_esp" name="especialidade" value="{{ usuario.especialidade or '' }}" placeholder="Ex: Cabeleireira, Barbeiro, Manicure"></div>
+      <div class="form-group"><label class="form-label" for="p_tel">Telefone (opcional)</label>
+        <input class="form-control" id="p_tel" name="telefone" value="{{ usuario.telefone or '' }}" inputmode="numeric" placeholder="(11) 90000-0000"></div>
+      <div class="form-group"><label class="form-label">E-mail de acesso</label>
+        <input class="form-control" value="{{ usuario.email }}" disabled style="background:var(--surface-2);"></div>
+      <button class="btn btn-primary" style="width:auto;">Salvar dados</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:1rem;">Foto</h2>
+    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+      {% if usuario.foto %}<img src="{{ usuario.foto }}" alt="" class="avatar g">{% else %}<span class="avatar g">{{ usuario.nome[0]|upper }}</span>{% endif %}
+      <p style="color:var(--text-muted); font-size:.88rem;">Sem foto, mostramos a primeira letra do seu nome.</p>
+    </div>
+    <form method="post" action="/minhaagenda/perfil/foto" enctype="multipart/form-data" style="display:flex; gap:.5rem; flex-wrap:wrap;">{{ csrf_input() }}
+      <input type="file" name="foto" accept="image/jpeg,image/png,image/webp" class="form-control" style="flex:1; min-width:200px;">
+      <button class="btn btn-primary" style="width:auto;">Enviar foto</button>
+    </form>
+    {% if usuario.foto %}
+    <form method="post" action="/minhaagenda/perfil/foto" style="margin-top:.6rem;">{{ csrf_input() }}
+      <input type="hidden" name="remover" value="1"><button class="btn btn-sm btn-outline">Remover foto</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:1rem;">Trocar senha</h2>
+    <form method="post" action="/minhaagenda/perfil/senha" autocomplete="off">{{ csrf_input() }}
+      <div class="form-group"><label class="form-label" for="s_atual">Senha atual</label>
+        <input class="form-control" type="password" id="s_atual" name="senha_atual" required autocomplete="current-password"></div>
+      <div class="form-group"><label class="form-label" for="s_nova">Nova senha</label>
+        <input class="form-control" type="password" id="s_nova" name="nova_senha" required minlength="8" autocomplete="new-password" placeholder="8+ caracteres, letras e números"></div>
+      <div class="form-group"><label class="form-label" for="s_conf">Confirmar nova senha</label>
+        <input class="form-control" type="password" id="s_conf" name="confirmar_senha" required minlength="8" autocomplete="new-password"></div>
+      <button class="btn btn-primary" style="width:auto;">Trocar senha</button>
+      <a href="/minhaagenda/mfa" style="margin-left:1rem; color:var(--brand); font-size:.88rem;">Segundo fator (MFA){% if not mfa_habilitado %} — em breve{% endif %}</a>
+    </form>
+  </div>
+
+  <div class="card" id="calendario">
+    <h2 class="card-title" style="margin-bottom:.35rem;">Ver meus horários no Google Agenda</h2>
+    {% if pode_sincronizar %}
+      <p style="color:var(--text-muted); font-size:.88rem; margin-bottom:1rem;">
+        {% if pode('agenda.todos') %}Mostra todos os agendamentos do salão{% else %}Mostra os seus agendamentos{% endif %}
+        no Google Agenda (ou no calendário do celular). O link é secreto — não compartilhe.
+      </p>
+      {% if usuario.calendario_token %}
+        {% set link = url_base ~ '/calendario/' ~ usuario.calendario_token ~ '.ics' %}
+        <div style="display:flex; gap:.4rem;">
+          <input class="form-control" id="link_cal" value="{{ link }}" readonly style="font-family:var(--mono); font-size:.8rem;">
+          <button type="button" class="btn btn-sm btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('link_cal').value); this.textContent='Copiado!';">Copiar</button>
+        </div>
+        <ol style="font-size:.85rem; color:var(--text-muted); margin:.9rem 0 0 1.1rem; line-height:1.7;">
+          <li>Abra o <b>Google Agenda no computador</b>.</li>
+          <li>Em “Outras agendas”, clique em <b>+</b> → <b>Do URL</b>.</li>
+          <li>Cole o link e clique em <b>Adicionar agenda</b>. Ela aparece também no celular.</li>
+        </ol>
+        <p style="font-size:.78rem; color:var(--text-light); margin-top:.6rem;">O Google atualiza esse tipo de agenda a cada poucas horas.</p>
+        <form method="post" action="/minhaagenda/perfil/calendario" style="margin-top:.8rem; display:flex; gap:.5rem;">{{ csrf_input() }}
+          <button class="btn btn-sm btn-outline">Gerar link novo</button>
+          <button class="btn btn-sm btn-outline" name="revogar" value="1" style="color:var(--danger);">Desativar link</button>
+        </form>
+      {% else %}
+        <form method="post" action="/minhaagenda/perfil/calendario">{{ csrf_input() }}<button class="btn btn-primary" style="width:auto;">Gerar meu link de calendário</button></form>
+      {% endif %}
+    {% else %}
+      <p style="color:var(--text-muted); font-size:.88rem;">Disponível a partir do plano <b>Pro</b>.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

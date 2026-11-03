@@ -1,0 +1,145 @@
+{% extends "admin/admin_base.html" %}
+{% from "admin/_acoes_assinatura.html" import acoes with context %}
+
+{% block title %}{{ salao.nome }} — Admin SaaS{% endblock %}
+
+{% block content %}
+{% set voltar = '/admin/saloes/' ~ salao.id %}
+<div style="margin-bottom: 1.5rem;"><a href="/admin/saloes" class="btn-back">← Voltar para Salões</a></div>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <div style="display:flex; align-items:center; gap:.75rem; margin-bottom:.35rem; flex-wrap:wrap;">
+      <h1 style="font-size:1.85rem; font-weight:800; color:#1e1b4b; margin:0;">{{ salao.nome }}</h1>
+      {% if salao.encerrado_em %}<span class="badge badge-neutral">Conta encerrada</span>
+      {% elif salao.ativo %}<span class="badge badge-success">Ativo</span>
+      {% else %}<span class="badge badge-danger">Bloqueado</span>{% endif %}
+      {% if assinatura %}{% set rot = assinatura.status|status_assinatura %}<span class="badge {{ rot[1] }}">{{ rot[0] }}</span>{% endif %}
+    </div>
+    <div style="display:flex; align-items:center; gap:1rem; color:var(--text-muted); font-size:.92rem; flex-wrap:wrap;">
+      <span>ID #{{ salao.id }}</span><span>•</span>
+      <a href="/{{ salao.slug }}" target="_blank" style="color:#7c3aed;">/{{ salao.slug }} ↗</a><span>•</span>
+      <span>Cadastrado em {{ salao.criado_em.strftime('%d/%m/%Y às %H:%M') if salao.criado_em else '-' }}</span>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:.75rem; align-items:center;">
+    {% if salao.encerrado_em and not salao.anonimizado_em %}
+      <form action="/admin/saloes/{{ salao.id }}/reabrir" method="post" onsubmit="return confirm('Desfazer o encerramento? A assinatura volta a aguardar pagamento.');">{{ csrf_input() }}
+        <button class="btn btn-outline" style="width:auto;">Desfazer encerramento</button></form>
+    {% elif salao.ativo %}
+      <form action="/admin/saloes/{{ salao.id }}/suspender" method="post" onsubmit="return confirm('Suspender este salão? O contratante é avisado por e-mail.');">{{ csrf_input() }}
+        <button class="btn btn-danger" style="width:auto; padding:.65rem 1.25rem; font-size:.88rem;">Suspender salão</button></form>
+    {% elif not salao.encerrado_em %}
+      <form action="/admin/saloes/{{ salao.id }}/ativar" method="post" onsubmit="return confirm('Liberar o acesso sem registrar pagamento?');">{{ csrf_input() }}
+        <button class="btn btn-outline" style="width:auto; padding:.65rem 1.25rem; font-size:.88rem;" title="Cortesia/correção — não registra pagamento">Liberar acesso (cortesia)</button></form>
+    {% endif %}
+  </div>
+</div>
+
+{% if salao.encerrado_em %}
+<div class="alert alert-warning" style="margin-bottom:1.5rem;">
+  Encerrada pelo contratante em {{ salao.encerrado_em.strftime('%d/%m/%Y') }}.
+  {% if salao.anonimizado_em %}Dados pessoais anonimizados em {{ salao.anonimizado_em.strftime('%d/%m/%Y') }}.
+  {% else %}Os dados serão anonimizados em {{ salao.exclusao_prevista_em.strftime('%d/%m/%Y') }}.{% endif %}
+</div>
+{% endif %}
+
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom:2rem;">
+  <div class="kpi-card"><div class="kpi-label">Equipe</div><div class="kpi-value">{{ total_usuarios }}</div><div class="kpi-sub">de {{ vagas.limite }} no plano</div></div>
+  <div class="kpi-card"><div class="kpi-label">Serviços</div><div class="kpi-value">{{ total_servicos }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Clientes</div><div class="kpi-value">{{ total_clientes }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Agendamentos</div><div class="kpi-value">{{ total_agendamentos }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Faturamento do salão</div><div class="kpi-value" style="font-size:1.5rem; color:#166534;">R$ {{ faturamento_total|brl }}</div><div class="kpi-sub">atendimentos concluídos</div></div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.75rem; margin-bottom:2rem;" class="grid-admin-detalhe">
+  <div class="card">
+    <div class="card-header"><h2 class="card-title" style="font-size:1.1rem;">Contratante e contato</h2></div>
+    <div style="display:flex; flex-direction:column; gap:.8rem; font-size:.92rem;">
+      {% for rot, val in [('E-mail', salao.email_principal), ('Telefone', salao.telefone or salao.whatsapp or 'Não informado'),
+                          ('Instagram', salao.instagram or 'Não informado'),
+                          ('Endereço', (salao.endereco ~ ' - ' ~ (salao.cidade or '') ~ '/' ~ (salao.estado or '')) if salao.endereco else 'Não informado')] %}
+      <div style="display:flex; justify-content:space-between; gap:1rem; border-bottom:1px solid var(--surface-2); padding-bottom:.5rem;">
+        <span style="color:var(--text-muted);">{{ rot }}</span><span style="text-align:right;">{{ val }}</span></div>
+      {% endfor %}
+      <div style="display:flex; justify-content:space-between; gap:1rem; border-bottom:1px solid var(--surface-2); padding-bottom:.5rem;">
+        <span style="color:var(--text-muted);">{{ salao.tipo_documento or 'CPF/CNPJ' }}</span>
+        <span style="font-family:var(--mono);">{{ documento or 'Não informado' }}</span>
+      </div>
+      {% if mesmo_documento %}
+      <div class="alert alert-warning" style="margin:0; font-size:.85rem;">
+        Mesmo CPF/CNPJ em: {% for o in mesmo_documento %}<a href="/admin/saloes/{{ o.id }}">{{ o.nome }}</a>{{ ', ' if not loop.last }}{% endfor %}
+        — o teste grátis não foi concedido de novo.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2 class="card-title" style="font-size:1.1rem;">Assinatura</h2></div>
+    {% if assinatura %}
+      <div style="display:flex; flex-direction:column; gap:.8rem; font-size:.92rem;">
+        <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Plano</span>
+          <span class="badge badge-purple">{{ plano.nome if plano else '-' }} · {{ 'anual' if assinatura.periodicidade.value == 'ANUAL' else 'mensal' }}</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Valor</span><b>R$ {{ (assinatura.valor_cobrado or 0)|brl }}</b></div>
+        <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Início</span><span>{{ assinatura.data_inicio.strftime('%d/%m/%Y') if assinatura.data_inicio else '—' }}</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">{{ 'Fim do teste' if assinatura.status.value == 'TESTE' else 'Vencimento' }}</span>
+          <b>{{ assinatura.data_fim.strftime('%d/%m/%Y') if assinatura.data_fim else ('aguardando confirmar e-mail' if assinatura.status.value == 'TESTE' else '—') }}</b></div>
+        <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Último pagamento</span><span>{{ assinatura.data_pagamento.strftime('%d/%m/%Y') if assinatura.data_pagamento else '—' }}</span></div>
+        <div style="margin-top:.25rem;">{{ acoes(assinatura, voltar) }}</div>
+        {% if pagamentos %}
+        <details style="font-size:.85rem;"><summary style="cursor:pointer; color:var(--text-muted);">Pagamentos ({{ pagamentos|length }})</summary>
+          {% for p in pagamentos %}<div style="display:flex; justify-content:space-between; padding:.25rem 0;">
+            <span>{{ p.pago_em.strftime('%d/%m/%Y') if p.pago_em else '' }} · {{ p.forma or '' }}</span><b>R$ {{ p.valor|brl }}</b></div>{% endfor %}
+        </details>
+        {% endif %}
+      </div>
+    {% else %}
+      <p style="color:var(--text-muted);">Sem assinatura.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" id="equipe">
+  <div class="card-header" style="flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h2 class="card-title" style="font-size:1.1rem;">Equipe</h2>
+      <span style="font-size:.82rem; color:var(--text-muted);">{{ vagas.usados }} de {{ vagas.limite }} vagas do plano usadas (contando convites pendentes)</span>
+    </div>
+    {% if not salao.encerrado_em %}
+    <form action="/admin/saloes/{{ salao.id }}/convidar" method="post" style="display:flex; gap:.5rem; flex-wrap:wrap;">{{ csrf_input() }}
+      <input type="email" name="email" class="form-control" placeholder="E-mail da pessoa" required style="width:230px;">
+      <select name="papel" class="form-control" style="width:auto;">
+        <option value="FUNCIONARIO">Funcionário</option>
+        {% if vagas.permite_gerente %}<option value="GERENTE">Gerente</option>{% endif %}
+      </select>
+      <button class="btn btn-primary" style="width:auto; background:#7c3aed;">Enviar convite</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Nome</th><th>E-mail</th><th>Função</th><th>Situação</th><th>Último login</th></tr></thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td style="font-weight:600;">{{ u.nome }}{% if u.especialidade %}<div style="font-size:.78rem; color:var(--text-muted); font-weight:400;">{{ u.especialidade }}</div>{% endif %}</td>
+        <td>{{ u.email }}</td>
+        <td><span class="badge {{ 'badge-purple' if u.role.value == 'DONO' else 'badge-info' if u.role.value == 'GERENTE' else 'badge-neutral' }}">{{ rotulo_papel(u.role) }}</span></td>
+        <td>{% if not u.ativo %}<span class="badge badge-danger">Removido</span>{% elif not u.email_verificado %}<span class="badge badge-warning">E-mail não confirmado</span>{% else %}<span class="badge badge-success">Ativo</span>{% endif %}</td>
+        <td style="font-size:.82rem; color:var(--text-muted);">{{ u.ultimo_login.strftime('%d/%m/%Y %H:%M') if u.ultimo_login else 'Nunca' }}</td>
+      </tr>
+      {% endfor %}
+      {% for c in convites %}
+      <tr style="opacity:.75;">
+        <td style="color:var(--text-muted);">(convite pendente)</td><td>{{ c.email }}</td>
+        <td><span class="badge badge-neutral">{{ rotulo_papel(c.papel) }}</span></td>
+        <td><span class="badge badge-warning">Expira {{ c.expira_em.strftime('%d/%m') }}</span></td><td></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+<style>@media (max-width: 900px){ .grid-admin-detalhe{ grid-template-columns: 1fr !important; } }</style>
+{% endblock %}

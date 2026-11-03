@@ -1,0 +1,55 @@
+/* Agendamento pelo cliente /{slug}/agendar/{servico}
+   Usado em: app/templates/public/agendar.html
+   (extraído do template para facilitar a manutenção) */
+
+.salon-btn { background: var(--salon-brand); color: white; width: 100%; padding: 1rem; border-radius: 8px; font-size: 1.1rem; border:none; cursor:pointer;}
+.salon-btn:hover { background: var(--salon-accent); }
+
+.time-slot {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .18s, color .18s, box-shadow .18s, transform .15s;
+  font-weight: 600;
+  background: var(--surface);
+}
+.time-slot:hover { border-color: var(--salon-brand); color: var(--salon-brand); transform: translateY(-1px); }
+/* Selecionado: borda na 2ª cor (não preenche o campo inteiro) */
+.time-slot.selected {
+  border-color: var(--salon-accent);
+  color: var(--salon-brand);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--salon-accent), 0 4px 12px -4px color-mix(in srgb, var(--salon-accent) 55%, transparent);
+  font-weight: 800;
+}
+
+.time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.75rem; margin-top: 1rem;}
+
+/* Passos */
+.passo { margin-bottom: 2rem; }
+.passo h3 { font-size: 1.1rem; margin-bottom: 1rem; }
+
+/* Escolha do profissional */
+.prof-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .6rem; }
+.prof-card { display: flex; align-items: center; gap: .7rem; padding: .7rem .8rem; border: 2px solid var(--border); border-radius: 12px;
+  cursor: pointer; background: var(--surface); transition: border-color .18s, box-shadow .18s, transform .15s; }
+.prof-card:hover { border-color: var(--salon-brand); transform: translateY(-1px); }
+.prof-card input { position: absolute; opacity: 0; pointer-events: none; }
+.prof-card .avatar { background: color-mix(in srgb, var(--salon-brand) 14%, #fff); color: var(--salon-brand); }
+.prof-card b { display: block; font-size: .92rem; }
+.prof-card small { color: var(--text-muted); font-size: .78rem; }
+/* Selecionado: borda na 2ª cor do salão (não preenche o cartão) */
+.prof-card:has(input:checked) { border-color: var(--salon-accent); box-shadow: inset 0 0 0 1px var(--salon-accent); }
+.prof-card:has(input:focus-visible) { outline: 2px solid var(--salon-brand); outline-offset: 2px; }
+
+.time-slot { font-family: var(--font); font-size: .95rem; color: var(--text); }
+
+.sem-horario { color: #991b1b; padding: 1rem; background: var(--danger-light); border-radius: 8px; line-height: 1.6; }
+.link-espera { background: none; border: none; padding: 0; color: var(--salon-brand); font-weight: 700; text-decoration: underline; cursor: pointer; font: inherit; }
+
+.aviso-privacidade { font-size: .8rem; color: var(--text-muted); line-height: 1.5; margin-top: .5rem; }
+.aviso-privacidade a { color: var(--salon-brand); }
+
+.espera { margin-top: 2rem; padding: 1.5rem; border: 2px dashed var(--salon-accent); border-radius: 14px; background: var(--surface); }

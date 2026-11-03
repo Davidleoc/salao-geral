@@ -1,0 +1,62 @@
+{# Painel bloqueado — routes/conta.py. Explica o motivo e mostra como resolver. #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Situação da conta — {{ salao.nome }}{% endblock %}
+
+{% set st = assinatura.status.value if assinatura else '' %}
+{% block content %}
+<div style="max-width:640px; margin: 2rem auto;">
+  <div class="card" style="text-align:center; padding:2.25rem 1.75rem;">
+    <div style="color:var(--brand); margin-bottom:1rem;">{{ icon('lock', 40) }}</div>
+
+    {% if salao.encerrado_em %}
+      <h1 style="font-size:1.4rem; font-weight:800; margin-bottom:.5rem;">Conta encerrada</h1>
+      <p style="color:var(--text-muted); line-height:1.6;">
+        A conta do {{ salao.nome }} foi encerrada em {{ salao.encerrado_em.strftime('%d/%m/%Y') }}.
+        {% if salao.anonimizado_em %}Os dados pessoais já foram apagados.
+        {% else %}Os dados ficam guardados até {{ salao.exclusao_prevista_em.strftime('%d/%m/%Y') }} — depois são apagados definitivamente.{% endif %}
+      </p>
+      {% if eh_dono and not salao.anonimizado_em %}
+        <a href="/minhaagenda/assinatura/meus-dados.zip" class="btn btn-outline" style="width:auto; margin-top:1.25rem;">{{ icon('download', 16) }} Baixar cópia dos dados</a>
+      {% endif %}
+
+    {% elif st == 'SUSPENSO' %}
+      <h1 style="font-size:1.4rem; font-weight:800; margin-bottom:.5rem;">Assinatura suspensa</h1>
+      <p style="color:var(--text-muted); line-height:1.6;">O pagamento não foi identificado dentro do prazo. A agenda e a página pública estão fora do ar, mas <b>nenhum dado foi apagado</b> — ao regularizar, tudo volta como estava.</p>
+
+    {% elif st == 'CANCELADO' %}
+      <h1 style="font-size:1.4rem; font-weight:800; margin-bottom:.5rem;">Assinatura cancelada</h1>
+      <p style="color:var(--text-muted); line-height:1.6;">Para voltar a usar, fale com o suporte respondendo qualquer e-mail nosso.</p>
+
+    {% elif st == 'AGUARDANDO_PAGAMENTO' %}
+      <h1 style="font-size:1.4rem; font-weight:800; margin-bottom:.5rem;">Falta confirmar a assinatura</h1>
+      <p style="color:var(--text-muted); line-height:1.6;">
+        {% if assinatura.data_inicio %}O teste grátis terminou.{% else %}A assinatura começa com o primeiro pagamento.{% endif %}
+        Assim que o pagamento for confirmado, o painel e a página de agendamento são liberados.
+      </p>
+
+    {% else %}
+      <h1 style="font-size:1.4rem; font-weight:800; margin-bottom:.5rem;">Conta indisponível</h1>
+      <p style="color:var(--text-muted);">Fale com o suporte para entender o que aconteceu.</p>
+    {% endif %}
+
+    {% if not salao.encerrado_em and st != 'CANCELADO' %}
+      {% if eh_dono %}
+        {% if pix %}
+        <div style="text-align:left; margin-top:1.5rem; padding:1rem; background:var(--brand-light); border-radius:12px;">
+          <div class="kpi-label" style="color:var(--brand-dark);">Pix copia e cola — R$ {{ assinatura.valor_cobrado|brl }}</div>
+          <div style="display:flex; gap:.5rem; margin-top:.4rem;">
+            <input class="form-control" id="pix_codigo" value="{{ pix }}" readonly style="font-family:var(--mono); font-size:.78rem;">
+            <button type="button" class="btn btn-primary" style="width:auto;" onclick="navigator.clipboard.writeText(document.getElementById('pix_codigo').value); this.textContent='Copiado!';">Copiar</button>
+          </div>
+        </div>
+        {% else %}
+        <p style="margin-top:1.25rem; font-size:.9rem;">Os dados do Pix foram enviados para <b>{{ salao.email_principal }}</b>.</p>
+        {% endif %}
+        <a href="/minhaagenda/assinatura" class="btn btn-outline" style="width:auto; margin-top:1.25rem;">Ver assinatura e dados</a>
+      {% else %}
+        <p style="margin-top:1.25rem; font-size:.9rem;">Avise o dono do salão — só ele consegue regularizar a assinatura.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

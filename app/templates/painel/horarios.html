@@ -1,0 +1,101 @@
+{% extends "painel/painel_base.html" %}
+{% block title %}Horários de Funcionamento — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:700;">Horários de Funcionamento</h1>
+    <p style="color:var(--text-muted); font-size:0.95rem;">Defina quando o salão está aberto para receber clientes.</p>
+  </div>
+  <a href="/minhaagenda/configuracoes" class="btn-back">← Voltar</a>
+</div>
+
+<div class="card" style="max-width: 800px;">
+  <form method="post" action="/minhaagenda/configuracoes/horarios">{{ csrf_input() }}
+    
+    <div style="margin-bottom: 2rem;">
+      <h3 style="font-size:1.1rem; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Grade Semanal</h3>
+      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;">
+        Desmarque o dia se o salão estiver fechado.
+      </p>
+      
+      {% for i in range(7) %}
+        {% set horario = horarios_por_dia.get(i) %}
+        {% set ativo = horario.ativo if horario else (i < 6 and i > 0) %} {# Seg a Sex default #}
+        
+        <div style="display:flex; align-items:center; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: var(--surface-2); border-radius: var(--radius-sm);">
+          
+          <div style="flex: 0 0 120px;">
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="dia_{{ i }}_ativo" value="1" {% if ativo %}checked{% endif %}
+                     onchange="toggleLinha(this, {{ i }})">
+              {{ dias_semana[i] }}
+            </label>
+          </div>
+          
+          <div id="linha_{{ i }}" style="display:flex; gap: 1rem; flex:1; {% if not ativo %}opacity:0.4; pointer-events:none;{% endif %}">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="font-size:0.75rem;">Abertura</label>
+              <input class="form-control" type="time" name="dia_{{ i }}_abertura" 
+                     value="{{ horario.hora_abertura.strftime('%H:%M') if horario else '09:00' }}">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="font-size:0.75rem;">Fechamento</label>
+              <input class="form-control" type="time" name="dia_{{ i }}_fechamento" 
+                     value="{{ horario.hora_fechamento.strftime('%H:%M') if horario else '18:00' }}">
+            </div>
+            
+            <div class="form-group" style="margin:0; border-left: 1px solid var(--border); padding-left: 1rem;">
+              <label class="form-label" style="font-size:0.75rem;">Início Pausa</label>
+              <input class="form-control" type="time" name="dia_{{ i }}_pausa_inicio" 
+                     value="{{ horario.pausa_inicio.strftime('%H:%M') if horario and horario.pausa_inicio else '' }}">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="font-size:0.75rem;">Fim Pausa</label>
+              <input class="form-control" type="time" name="dia_{{ i }}_pausa_fim" 
+                     value="{{ horario.pausa_fim.strftime('%H:%M') if horario and horario.pausa_fim else '' }}">
+            </div>
+          </div>
+          
+        </div>
+      {% endfor %}
+    </div>
+
+    <div style="margin-bottom: 2rem;">
+      <h3 style="font-size:1.1rem; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Intervalo da Agenda</h3>
+      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">
+        De quanto em quanto tempo os horários devem aparecer para o cliente? (Ex: 09:00, 09:30, 10:00)
+      </p>
+      
+      {% set intervalo_atual = horarios_por_dia.get(0).intervalo_minutos if horarios_por_dia.get(0) else 30 %}
+      <div style="max-width: 200px;">
+        <select class="form-control" name="intervalo_minutos">
+          <option value="15" {% if intervalo_atual == 15 %}selected{% endif %}>15 minutos</option>
+          <option value="30" {% if intervalo_atual == 30 %}selected{% endif %}>30 minutos</option>
+          <option value="45" {% if intervalo_atual == 45 %}selected{% endif %}>45 minutos</option>
+          <option value="60" {% if intervalo_atual == 60 %}selected{% endif %}>60 minutos</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="text-align:right; border-top:1px solid var(--border); padding-top:1.5rem;">
+      <button type="submit" class="btn btn-primary">Salvar Horários</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleLinha(checkbox, dia) {
+  const linha = document.getElementById('linha_' + dia);
+  if (checkbox.checked) {
+    linha.style.opacity = '1';
+    linha.style.pointerEvents = 'auto';
+  } else {
+    linha.style.opacity = '0.4';
+    linha.style.pointerEvents = 'none';
+  }
+}
+</script>
+{% endblock %}

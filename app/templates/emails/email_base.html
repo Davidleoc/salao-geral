@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{% block title %}{{ salao.nome if salao else app_name }}{% endblock %}</title>
+  <style type="text/css">
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; display: block; }
+    body { margin: 0; padding: 0; width: 100% !important; min-width: 100%; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
+    @media only screen and (max-width: 620px) {
+      .email-container { width: 100% !important; border-radius: 0 !important; }
+      .email-body { padding: 24px 18px !important; }
+      .email-header { padding: 28px 18px !important; }
+      .email-footer { padding: 20px 18px !important; }
+      .info-box { padding: 16px !important; }
+      .button-cta { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 24px 0; background-color: #f1f5f9; -webkit-font-smoothing: antialiased;">
+  <center style="width: 100%; background-color: #f1f5f9;">
+    <!-- Container Principal do Email -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);" class="email-container">
+      
+      <!-- Cabeçalho Personalizado com Cor da Marca -->
+      <tr>
+        <td class="email-header" style="background-color: {{ cor_primaria }}; padding: 32px 24px; text-align: center;">
+          {% if salao.logo %}
+            <div style="margin-bottom: 12px; text-align: center;">
+              <img src="{{ salao.logo }}" alt="{{ salao.nome }}" style="max-height: 54px; max-width: 220px; display: inline-block; margin: 0 auto;">
+            </div>
+          {% endif %}
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; text-shadow: 0 1px 2px rgba(0,0,0,0.15);">
+            {{ salao.nome }}
+          </h1>
+          {% if salao.descricao %}
+            <p style="margin: 6px 0 0 0; font-size: 13px; color: #ffffff; opacity: 0.9;">
+              {{ salao.descricao }}
+            </p>
+          {% endif %}
+        </td>
+      </tr>
+
+      <!-- Barra de Destaque Secundária -->
+      <tr>
+        <td style="background-color: {{ cor_secundaria }}; height: 4px; font-size: 0; line-height: 0;">&nbsp;</td>
+      </tr>
+
+      <!-- Conteúdo Específico do E-mail -->
+      <tr>
+        <td class="email-body" style="padding: 36px 32px; background-color: #ffffff;">
+          {% block content %}{% endblock %}
+        </td>
+      </tr>
+
+      <!-- Rodapé Institucional com Dados de Contato -->
+      <tr>
+        <td class="email-footer" style="padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 13px; color: #64748b; text-align: center;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="padding-bottom: 14px; text-align: center; color: #334155; line-height: 1.5;">
+                <strong style="font-size: 14px; color: #1e293b;">{{ salao.nome }}</strong>
+                {% if salao.endereco %}
+                  <div style="margin-top: 4px; color: #64748b; font-size: 12px;">
+                    📍 {{ salao.endereco }}{% if salao.cidade %} — {{ salao.cidade }}/{{ salao.estado }}{% endif %}
+                  </div>
+                {% endif %}
+                {% if salao.whatsapp or salao.telefone %}
+                  <div style="margin-top: 4px; color: #64748b; font-size: 12px;">
+                    📞 {% if salao.whatsapp %}WhatsApp: <strong>{{ salao.whatsapp }}</strong>{% else %}Telefone: <strong>{{ salao.telefone }}</strong>{% endif %}
+                  </div>
+                {% endif %}
+                {% if salao.instagram %}
+                  <div style="margin-top: 4px; color: #64748b; font-size: 12px;">
+                    📸 Instagram: <strong>@{{ salao.instagram.replace('@', '') }}</strong>
+                  </div>
+                {% endif %}
+              </td>
+            </tr>
+
+            <!-- Linha Divisória do Rodapé -->
+            <tr>
+              <td style="border-top: 1px solid #e2e8f0; padding-top: 14px; font-size: 12px; color: #94a3b8; text-align: center; line-height: 1.4;">
+                <p style="margin: 0 0 4px 0;">
+                  Notificação gerada automaticamente por <strong>{{ app_name }}</strong> em nome de <strong>{{ salao.nome }}</strong>.
+                </p>
+                <p style="margin: 0;">
+                  &copy; {{ ano_atual }} {{ salao.nome }}. Todos os direitos reservados.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+    </table>
+  </center>
+</body>
+</html>

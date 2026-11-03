@@ -1,0 +1,158 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}
+  {% if is_edit %}Editar Plano: {{ plano.nome }}{% else %}Novo Plano de Assinatura{% endif %} — Admin SaaS
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="/admin/planos" class="btn-back">← Voltar para Planos</a>
+</div>
+
+<div style="max-width: 800px;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.75rem; font-weight: 800; color: #1e1b4b; letter-spacing: -0.5px;">
+      {% if is_edit %}Editar Plano: {{ plano.nome }}{% else %}Criar Novo Plano{% endif %}
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      Defina as condições financeiras, limites operacionais e recursos disponíveis para os salões.
+    </p>
+  </div>
+
+  <div class="card" style="padding: 2rem;">
+    <form method="post" action="{% if is_edit %}/admin/planos/{{ plano.id }}{% else %}/admin/planos{% endif %}">{{ csrf_input() }}
+      
+      <!-- Seção: Identificação -->
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: #1e1b4b; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+        1. Identificação do Plano
+      </h3>
+
+      <div class="form-group">
+        <label class="form-label" for="nome">Nome do Plano *</label>
+        <input type="text" id="nome" name="nome" class="form-control" value="{{ plano.nome if plano else '' }}" placeholder="Ex: Básico, Profissional, Premium" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="descricao">Descrição / Apresentação Comercial</label>
+        <textarea id="descricao" name="descricao" class="form-control" rows="3" placeholder="Ideal para salões que estão começando ou autônomos...">{{ (plano.descricao or '') if plano else '' }}</textarea>
+      </div>
+
+      <!-- Seção: Preços -->
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: #1e1b4b; margin-top: 2rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+        2. Precificação
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label" for="preco_mensal">Preço Mensal (R$) *</label>
+          <input type="number" step="0.01" min="0" id="preco_mensal" name="preco_mensal" class="form-control" value="{{ plano.preco_mensal if plano else '49.90' }}" required>
+          <small style="color: var(--text-muted); font-size: 0.78rem;">Cobrado a cada 30 dias.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="preco_anual">Preço Anual (R$) *</label>
+          <input type="number" step="0.01" min="0" id="preco_anual" name="preco_anual" class="form-control" value="{{ plano.preco_anual if plano else '499.00' }}" required>
+          <small style="color: var(--text-muted); font-size: 0.78rem;">Cobrado a cada 12 meses (com desconto anual).</small>
+        </div>
+      </div>
+
+      <!-- Seção: Limites Operacionais -->
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: #1e1b4b; margin-top: 2rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+        3. Limites Operacionais
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label" for="max_usuarios">Máx. Usuários / Colaboradores *</label>
+          <input type="number" min="1" id="max_usuarios" name="max_usuarios" class="form-control" value="{{ plano.max_usuarios if plano else 2 }}" required>
+          <small style="color: var(--text-muted); font-size: 0.78rem;">Quantidade de logins permitidos no salão.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="max_servicos">Máx. Serviços Ativos</label>
+          <input type="number" min="0" id="max_servicos" name="max_servicos" class="form-control" value="{{ plano.max_servicos if (plano and plano.max_servicos is not none) else '' }}" placeholder="Deixe em branco para ilimitado">
+          <small style="color: var(--text-muted); font-size: 0.78rem;">Deixe vazio para serviços ilimitados.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="max_emails">Máx. E-mails de Notificação *</label>
+          <input type="number" min="1" id="max_emails" name="max_emails" class="form-control" value="{{ plano.max_emails if plano else 2 }}" required>
+          <small style="color: var(--text-muted); font-size: 0.78rem;">E-mails que recebem alertas do salão.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="historico_meses">Histórico Disponível (Meses) *</label>
+          <input type="number" min="1" id="historico_meses" name="historico_meses" class="form-control" value="{{ plano.historico_meses if plano else 2 }}" required>
+          <small style="color: var(--text-muted); font-size: 0.78rem;">Meses de consultas a relatórios passados.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="max_fotos">Máx. Fotos na aba "Sobre" *</label>
+          <input type="number" min="0" id="max_fotos" name="max_fotos" class="form-control" value="{{ plano.max_fotos if plano else 0 }}" required>
+          <small style="color: var(--text-muted); font-size: 0.78rem;">0 = sem fotos na página pública.</small>
+        </div>
+      </div>
+
+      <!-- Seção: Recursos e Funcionalidades -->
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: #1e1b4b; margin-top: 2rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+        4. Recursos e Módulos Disponíveis
+      </h3>
+
+      <div style="display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 2rem;">
+        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.92rem;">
+          <input type="checkbox" name="exportacao" value="true" {% if (plano and plano.exportacao) %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #7c3aed;">
+          <span><strong>Exportação de Dados:</strong> Permite exportar relatórios para planilhas CSV/Excel.</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.92rem;">
+          <input type="checkbox" name="lembretes" value="true" {% if (plano and plano.lembretes) %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #7c3aed;">
+          <span><strong>Lembretes Automáticos:</strong> Disparo de e-mails automáticos antes dos agendamentos.</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.92rem;">
+          <input type="checkbox" name="personalizacao_avancada" value="true" {% if (plano and plano.personalizacao_avancada) %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #7c3aed;">
+          <span><strong>Personalização Visual Avançada:</strong> Paleta de cores customizada e logotipo na página.</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.92rem;">
+          <input type="checkbox" name="relatorios_avancados" value="true" {% if (plano and plano.relatorios_avancados) %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #7c3aed;">
+          <span><strong>Relatórios Analíticos Avançados:</strong> Gráficos e métricas de desempenho e ticket médio.</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.92rem;">
+          <input type="checkbox" name="dominio_personalizado" value="true" {% if (plano and plano.dominio_personalizado) %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #7c3aed;">
+          <span><strong>Domínio Próprio:</strong> Permite apontamento de domínio exclusivo do salão.</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.92rem;">
+          <input type="checkbox" name="permite_gerente" value="true" {% if (plano and plano.permite_gerente) %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #7c3aed;">
+          <span><strong>Função de Gerente:</strong> O dono pode convidar gerentes (organizam comissões e equipe).</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.92rem;">
+          <input type="checkbox" name="sincronizacao_agenda" value="true" {% if (plano and plano.sincronizacao_agenda) %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #7c3aed;">
+          <span><strong>Google Agenda:</strong> Link de calendário (.ics) para ver os horários no Google Agenda/celular.</span>
+        </label>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 0.5rem 0;">
+
+        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.92rem;">
+          <input type="checkbox" name="ativo" value="true" {% if (plano and plano.ativo) or not plano %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+          <span><strong style="color: #065f46;">Plano Ativo:</strong> Disponível publicamente para novas contratações na landing page.</span>
+        </label>
+      </div>
+
+      <!-- Botões de Ação -->
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+        <a href="/admin/planos" class="btn btn-outline" style="padding: 0.75rem 1.5rem;">
+          Cancelar
+        </a>
+        <button type="submit" class="btn btn-primary" style="width: auto; padding: 0.75rem 2rem; background: #7c3aed;">
+          {% if is_edit %}Atualizar Plano{% else %}Cadastrar Plano{% endif %}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

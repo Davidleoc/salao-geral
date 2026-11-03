@@ -1,0 +1,108 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Planos de Assinatura — Admin SaaS{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.75rem; font-weight: 800; color: #1e1b4b; letter-spacing: -0.5px;">Planos de Assinatura</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Configure os pacotes, faixas de preços e limites operacionais oferecidos aos salões.</p>
+  </div>
+  <a href="/admin/planos/novo" class="btn btn-primary" style="width: auto; padding: 0.75rem 1.5rem; background: #7c3aed;">
+    <span>+</span> Criar Novo Plano
+  </a>
+</div>
+
+<!-- Grid de Cards de Planos -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+  {% for p in planos %}
+  <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; position: relative; border-top: 4px solid {% if p.ativo %}#7c3aed{% else %}#94a3b8{% endif %};">
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+        <div>
+          <h2 style="font-size: 1.3rem; font-weight: 800; color: #1e1b4b; margin: 0;">{{ p.nome }}</h2>
+          <span style="font-size: 0.82rem; color: var(--text-muted);">{{ count_por_plano.get(p.id, 0) }} salão(ões) vinculados</span>
+        </div>
+        <div>
+          {% if p.ativo %}
+            <span class="badge badge-success">Ativo</span>
+          {% else %}
+            <span class="badge badge-neutral">Inativo</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem; min-height: 2.6rem;">
+        {{ p.descricao or "Sem descrição cadastrada." }}
+      </p>
+
+      <!-- Preços -->
+      <div style="background: var(--bg); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem;">
+          <span style="font-size: 0.82rem; color: var(--text-muted);">Cobrança Mensal:</span>
+          <span style="font-size: 1.25rem; font-weight: 800; color: #1e1b4b;">R$ {{ "%.2f"|format(p.preco_mensal) }}<span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">/mês</span></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span style="font-size: 0.82rem; color: var(--text-muted);">Cobrança Anual:</span>
+          <span style="font-size: 1rem; font-weight: 700; color: #5b21b6;">R$ {{ "%.2f"|format(p.preco_anual) }}<span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">/ano</span></span>
+        </div>
+      </div>
+
+      <!-- Limites -->
+      <div style="margin-bottom: 1.25rem; font-size: 0.85rem;">
+        <div style="font-weight: 700; color: #1e1b4b; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Limites do Plano:</div>
+        <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; color: var(--text);">
+          <li>{{ icon('users', 14) }} <strong>{{ p.max_usuarios }}</strong> profissionais/usuários</li>
+          <li>{{ icon('scissors', 14) }} <strong>{{ p.max_servicos if p.max_servicos is not none else "Ilimitados" }}</strong> serviços</li>
+          <li>{{ icon('mail', 14) }} <strong>{{ p.max_emails }}</strong> e-mails de notificação</li>
+          <li>{{ icon('calendar', 14) }} <strong>{{ p.historico_meses }}</strong> meses de histórico</li>
+        </ul>
+      </div>
+
+      <!-- Recursos Booleans -->
+      <div style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+        <div style="font-weight: 700; color: #1e1b4b; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;">Recursos Inclusos:</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+          <span class="badge {% if p.exportacao %}badge-purple{% else %}badge-neutral{% endif %}">
+            {{ "✓" if p.exportacao else "✗" }} Exportação
+          </span>
+          <span class="badge {% if p.lembretes %}badge-purple{% else %}badge-neutral{% endif %}">
+            {{ "✓" if p.lembretes else "✗" }} Lembretes
+          </span>
+          <span class="badge {% if p.personalizacao_avancada %}badge-purple{% else %}badge-neutral{% endif %}">
+            {{ "✓" if p.personalizacao_avancada else "✗" }} Personalização
+          </span>
+          <span class="badge {% if p.relatorios_avancados %}badge-purple{% else %}badge-neutral{% endif %}">
+            {{ "✓" if p.relatorios_avancados else "✗" }} Relatórios
+          </span>
+          <span class="badge {% if p.dominio_personalizado %}badge-purple{% else %}badge-neutral{% endif %}">
+            {{ "✓" if p.dominio_personalizado else "✗" }} Domínio Próprio
+          </span>
+          <span class="badge {% if p.permite_gerente %}badge-purple{% else %}badge-neutral{% endif %}">
+            {{ "✓" if p.permite_gerente else "✗" }} Gerente
+          </span>
+          <span class="badge {% if p.sincronizacao_agenda %}badge-purple{% else %}badge-neutral{% endif %}">
+            {{ "✓" if p.sincronizacao_agenda else "✗" }} Google Agenda
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ações -->
+    <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
+      <a href="/admin/planos/{{ p.id }}/editar" class="btn btn-outline" style="width: 100%; font-size: 0.88rem; justify-content: center;">
+        ✏️ Editar Configurações do Plano
+      </a>
+    </div>
+  </div>
+  {% else %}
+  <div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: var(--text-muted);" class="card">
+    <p style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">Nenhum plano cadastrado no momento.</p>
+    <p style="margin-bottom: 1.5rem;">Crie planos para permitir novas adesões de salões.</p>
+    <a href="/admin/planos/novo" class="btn btn-primary" style="display: inline-flex; width: auto; background: #7c3aed;">
+      Criar Primeiro Plano
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

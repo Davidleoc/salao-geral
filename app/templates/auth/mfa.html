@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Verificação MFA — MeuAgendamento{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-login.svg" /><link rel="apple-touch-icon" href="/static/img/fav-login.svg" />{% endblock %}
+
+{% block body %}
+<div class="auth-layout">
+
+  <div class="auth-brand">
+    <div class="auth-brand-logo" style="display:flex;align-items:center;gap:.55rem;"><span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;">{{ icon('scissors',20) }}</span> MeuAgendamento</div>
+    <div class="auth-brand-tagline">Verificação em dois fatores</div>
+    <p class="auth-brand-sub">
+      Sua conta está protegida com autenticação em dois fatores (TOTP).
+      Abra o aplicativo autenticador para obter o código.
+    </p>
+    <div class="auth-features">
+      <div class="auth-feature-item">
+        <span class="icon">{{ icon('lock', 18) }}</span>
+        Google Authenticator
+      </div>
+      <div class="auth-feature-item">
+        <span class="icon">{{ icon('lock', 18) }}</span>
+        Authy
+      </div>
+      <div class="auth-feature-item">
+        <span class="icon">{{ icon('lock', 18) }}</span>
+        Qualquer app TOTP
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-form-box">
+
+      <h1>Código de verificação</h1>
+      <p class="subtitle">Digite o código de 6 dígitos do seu autenticador</p>
+
+      {% if erro %}
+      <div class="alert alert-danger">⚠ {{ erro }}</div>
+      {% endif %}
+
+      <form method="post" action="/minhaagenda/login/mfa" autocomplete="off">{{ csrf_input() }}
+        <div class="form-group">
+          <label class="form-label" for="codigo">Código TOTP</label>
+          <input
+            class="form-control {% if erro %}is-invalid{% endif %}"
+            type="text"
+            id="codigo"
+            name="codigo"
+            placeholder="000000"
+            maxlength="6"
+            pattern="[0-9]{6}"
+            inputmode="numeric"
+            autofocus
+            required
+            style="font-size:1.5rem; letter-spacing:.4rem; text-align:center;"
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top:.5rem">
+          Verificar
+        </button>
+      </form>
+
+      <div class="auth-links">
+        <a href="/minhaagenda/login" class="btn-back">← Voltar ao login</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-submit quando 6 dígitos forem preenchidos
+document.getElementById('codigo').addEventListener('input', function() {
+  if (this.value.length === 6) {
+    this.closest('form').submit();
+  }
+});
+</script>
+{% endblock %}

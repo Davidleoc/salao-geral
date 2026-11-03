@@ -1,0 +1,134 @@
+{# Página pública do salão — textos fixos: app/textos/salao_publico.py · estilos: static/css/salao-publico.css · js: static/js/salao-publico.js #}
+{% extends "base.html" %}
+{% set t = textos.salao_publico %}
+{% block title %}{{ salao.nome }} — Agendamento Online{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-salao.svg" /><link rel="apple-touch-icon" href="/static/img/fav-salao.svg" />{% endblock %}
+{% block head %}
+<style>:root { --salon-brand: {{ salao.cor_principal }}; --salon-accent: {{ salao.cor_secundaria }}; }</style>
+<link rel="stylesheet" href="{{ asset('css/salao-publico.css') }}" />
+{% endblock %}
+
+{% block body %}
+
+<div class="sp-page">
+
+  <!-- Capa -->
+  <header class="sp-cover">
+    {% if salao.logo %}
+      <img class="sp-avatar" src="{{ salao.logo }}" alt="Logo {{ salao.nome }}">
+    {% else %}
+      <div class="sp-avatar">{{ salao.nome[0]|upper }}</div>
+    {% endif %}
+    <h1>{{ salao.nome }}</h1>
+    <p>{{ salao.descricao or t.DESCRICAO_PADRAO }}</p>
+    <div class="sp-chips">
+      {% if salao.cidade %}<span class="sp-chip">{{ icon('map-pin',15) }} {{ salao.cidade }}{% if salao.estado %}/{{ salao.estado }}{% endif %}</span>{% endif %}
+      {% if salao.whatsapp or salao.telefone %}<span class="sp-chip">{{ icon('phone',15) }} {{ salao.whatsapp or salao.telefone }}</span>{% endif %}
+      {% if salao.instagram %}<a class="sp-chip" href="https://instagram.com/{{ salao.instagram|replace('@','') }}" target="_blank" rel="noopener">{{ icon('instagram',15) }} @{{ salao.instagram|replace('@','') }}</a>{% endif %}
+    </div>
+  </header>
+
+  <main>
+    <div class="salon-tabs" role="tablist">
+      <button type="button" class="salon-tab" role="tab" id="tab-servicos" aria-controls="painel-servicos" aria-selected="true">{{ t.ABA_SERVICOS }}</button>
+      <button type="button" class="salon-tab" role="tab" id="tab-sobre" aria-controls="painel-sobre" aria-selected="false">{{ t.ABA_SOBRE }}</button>
+    </div>
+
+    <!-- Serviços -->
+    <section class="salon-panel" id="painel-servicos" role="tabpanel" aria-labelledby="tab-servicos">
+      {% if servicos %}
+        <div class="svc-list">
+          {% for servico in servicos %}
+          <article class="svc">
+            <div>
+              <h3>{{ servico.nome }}</h3>
+              {% if servico.descricao %}<p class="svc-desc">{{ servico.descricao }}</p>{% endif %}
+              <div class="svc-meta">
+                <span class="tag">{{ icon('clock',14) }} {{ servico.duracao_minutos }} min</span>
+                <span class="tag price">R$ {{ servico.preco|brl }}</span>
+              </div>
+            </div>
+            <div class="svc-btn-wrap">
+              <a href="/{{ salao.slug }}/agendar/{{ servico.id }}" class="salon-btn">{{ t.BOTAO_AGENDAR }} <span class="arr">→</span></a>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="sp-empty">
+          <div class="ic">{{ icon('calendar',40) }}</div>
+          <p style="margin-top:.75rem;">{{ t.SEM_SERVICOS }}</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Sobre -->
+    <section class="salon-panel" id="painel-sobre" role="tabpanel" aria-labelledby="tab-sobre" hidden>
+      <div class="about-grid">
+        <div>
+          <div class="about-card">
+            <h2>{{ icon('store',22) }} {{ t.SOBRE_TITULO.replace('{salao}', salao.nome) }}</h2>
+            {% if salao.sobre %}
+              <p class="about-text">{{ salao.sobre }}</p>
+            {% else %}
+              <p class="about-text" style="color:var(--text-muted);">{{ salao.descricao or t.SOBRE_PADRAO }}</p>
+            {% endif %}
+
+            {% if fotos %}
+              <h2 style="margin-top:1.75rem;">{{ icon('image',22) }} {{ t.GALERIA_TITULO }}</h2>
+              <div class="gallery">
+                {% for foto in fotos %}
+                  <button type="button" data-src="{{ foto.caminho }}" aria-label="Ampliar foto {{ loop.index }}">
+                    <img src="{{ foto.caminho }}" alt="Foto {{ loop.index }} de {{ salao.nome }}" loading="lazy">
+                  </button>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <aside>
+          <div class="about-card">
+            <h2>{{ icon('map-pin',20) }} {{ t.CONTATO_TITULO }}</h2>
+            <div class="about-info">
+              {% if salao.endereco or salao.cidade %}
+              <div class="info-row">
+                <span class="ic-box">{{ icon('map-pin',18) }}</span>
+                <span><span class="lbl">{{ t.CONTATO_ENDERECO }}</span><br><span class="val">{{ salao.endereco }}{% if salao.endereco and salao.cidade %} — {% endif %}{{ salao.cidade }}{% if salao.estado %}/{{ salao.estado }}{% endif %}</span></span>
+              </div>
+              {% endif %}
+              {% if salao.telefone or salao.whatsapp %}
+              <div class="info-row">
+                <span class="ic-box">{{ icon('phone',18) }}</span>
+                <span><span class="lbl">{{ t.CONTATO_TELEFONE }}</span><br><span class="val">{{ salao.whatsapp or salao.telefone }}</span></span>
+              </div>
+              {% endif %}
+              {% if salao.instagram %}
+              <div class="info-row">
+                <span class="ic-box">{{ icon('instagram',18) }}</span>
+                <span><span class="lbl">{{ t.CONTATO_INSTAGRAM }}</span><br><a class="val" style="color:var(--salon-brand); text-decoration:none;" href="https://instagram.com/{{ salao.instagram|replace('@','') }}" target="_blank" rel="noopener">@{{ salao.instagram|replace('@','') }}</a></span>
+              </div>
+              {% endif %}
+              {% if not (salao.endereco or salao.cidade or salao.telefone or salao.whatsapp or salao.instagram) %}
+                <p style="color:var(--text-muted); font-size:.92rem;">{{ t.CONTATO_VAZIO }}</p>
+              {% endif %}
+            </div>
+            {% if salao.whatsapp or salao.telefone %}
+              <a class="wa-btn" href="{{ (salao.whatsapp or salao.telefone)|link_whatsapp }}" target="_blank" rel="noopener">
+                {{ icon('phone',18) }} {{ t.BOTAO_WHATSAPP }}
+              </a>
+            {% endif %}
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog class="lightbox" id="lightbox">
+  <button type="button" class="lightbox-close" onclick="this.closest('dialog').close()">{{ t.FECHAR_FOTO }}</button>
+  <img id="lightboxImg" alt="">
+</dialog>
+
+<script src="{{ asset('js/salao-publico.js') }}"></script>
+{% endblock %}

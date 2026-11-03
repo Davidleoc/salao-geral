@@ -1,0 +1,48 @@
+{# Atendimentos e comissões da própria pessoa — routes/equipe.py #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Meus ganhos — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap; margin-bottom:1.75rem;">
+  <div>
+    <h1 style="font-size:1.5rem; font-weight:800;">Meus ganhos</h1>
+    <p style="color:var(--text-muted);">Seus atendimentos concluídos de {{ inicio.strftime('%d/%m') }} a {{ fim.strftime('%d/%m/%Y') }}.</p>
+  </div>
+  <form method="get" action="/minhaagenda/meus-ganhos">
+    <select name="mes" class="form-control" onchange="this.form.submit()" style="width:auto;">
+      {% for valor, rotulo in meses %}<option value="{{ valor }}" {% if valor == mes %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card" style="border-left:4px solid var(--brand);"><div class="kpi-label">Atendimentos</div><div class="kpi-value">{{ ganhos.atendimentos }}</div></div>
+  <div class="kpi-card" style="border-left:4px solid var(--success);"><div class="kpi-label">Valor atendido</div><div class="kpi-value">R$ {{ ganhos.faturado|brl }}</div></div>
+  <div class="kpi-card" style="border-left:4px solid #0ea5e9;"><div class="kpi-label">Minhas comissões</div><div class="kpi-value" style="color:#0369a1;">R$ {{ ganhos.comissao|brl }}</div>
+    <div class="kpi-sub">{{ ganhos.regra }}</div></div>
+</div>
+
+{% if ganhos.escopo == 'SALAO' %}
+<div class="alert alert-warning" style="margin-bottom:1rem;">Sua comissão é calculada sobre todos os atendimentos do salão no mês, por isso não aparece por atendimento abaixo.</div>
+{% endif %}
+<div class="card">
+  {% if ganhos.lista %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th style="text-align:right;">Valor</th><th style="text-align:right;">Comissão</th></tr></thead>
+    <tbody>
+    {% for a in ganhos.lista|sort(attribute='data', reverse=true) %}
+      <tr>
+        <td>{{ a.data.strftime('%d/%m') }} {{ a.hora_inicio.strftime('%H:%M') }}</td>
+        <td>{{ a.cliente.nome }}</td>
+        <td>{{ a.servico.nome }}</td>
+        <td style="text-align:right;">R$ {{ a.valor|brl }}</td>
+        <td style="text-align:right; font-weight:700; color:#0369a1;">{{ ('R$ ' ~ comissao_de(a)|brl) if ganhos.escopo != 'SALAO' else '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+    <p style="color:var(--text-muted);">Nenhum atendimento concluído neste mês.</p>
+  {% endif %}
+</div>
+{% endblock %}

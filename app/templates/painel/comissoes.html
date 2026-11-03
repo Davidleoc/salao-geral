@@ -1,0 +1,85 @@
+{# Relatório e regras de comissão por profissional — routes/equipe.py, cálculo em services/comissoes.py #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Comissões — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+{% set eh_dono = usuario.role.value == 'DONO' %}
+<div style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap; margin-bottom:1.75rem;">
+  <div>
+    <h1 style="font-size:1.5rem; font-weight:800;">Comissões</h1>
+    <p style="color:var(--text-muted);">Atendimentos concluídos de {{ inicio.strftime('%d/%m') }} a {{ fim.strftime('%d/%m/%Y') }}. Cada profissional tem a própria regra (abaixo).</p>
+  </div>
+  <form method="get" action="/minhaagenda/comissoes">
+    <select name="mes" class="form-control" onchange="this.form.submit()" style="width:auto;">
+      {% for valor, rotulo in meses %}<option value="{{ valor }}" {% if valor == mes %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card" style="border-left:4px solid var(--success);"><div class="kpi-label">Faturado</div><div class="kpi-value">R$ {{ totais.faturado|brl }}</div><div class="kpi-sub">{{ totais.atendimentos }} atendimentos</div></div>
+  <div class="kpi-card" style="border-left:4px solid #0ea5e9;"><div class="kpi-label">Comissões a pagar</div><div class="kpi-value" style="color:#0369a1;">R$ {{ totais.comissao|brl }}</div></div>
+  <div class="kpi-card" style="border-left:4px solid var(--danger);"><div class="kpi-label">Custos dos serviços</div><div class="kpi-value" style="color:#dc2626;">R$ {{ totais.custo|brl }}</div></div>
+  <div class="kpi-card" style="border-left:4px solid var(--brand);"><div class="kpi-label">Lucro do salão</div><div class="kpi-value" style="color:{{ 'var(--danger)' if totais.lucro_salao < 0 else 'var(--brand-dark)' }};">R$ {{ totais.lucro_salao|brl }}</div><div class="kpi-sub">faturado − custos − comissões</div></div>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+  <h2 class="card-title" style="margin-bottom:1rem;">A pagar por profissional</h2>
+  {% if linhas %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Profissional</th><th style="text-align:center;">Atendeu</th><th style="text-align:right;">Valor atendido</th><th style="text-align:right;">Comissão</th></tr></thead>
+    <tbody>
+    {% for l in linhas %}
+      <tr>
+        <td><b>{{ l.nome }}</b><div style="font-size:.8rem; color:var(--text-muted);">{{ l.regra }}</div></td>
+        <td style="text-align:center;"><span class="badge badge-neutral">{{ l.atendimentos }}</span></td>
+        <td style="text-align:right;">R$ {{ l.faturado|brl }}</td>
+        <td style="text-align:right; font-weight:800; color:#0369a1;">R$ {{ l.comissao|brl }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+    <p style="color:var(--text-muted);">Nenhum atendimento concluído neste mês.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 class="card-title" style="margin-bottom:.35rem;">Regra de cada profissional</h2>
+  <p style="color:var(--text-muted); font-size:.88rem; margin-bottom:1rem;">
+    <b>Sobre o valor</b>: % do preço cobrado. <b>Sobre o lucro</b>: % do preço menos o custo do serviço.
+    <b>Só o que atendeu</b>: conta os atendimentos da própria pessoa. <b>Todos do salão</b>: % sobre todos os atendimentos concluídos no mês (ex: gerente ou sócio).
+    {% if not eh_dono %}<br>O tipo da comissão é definido pelo dono; você pode ajustar o percentual.{% endif %}
+  </p>
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap:1rem;">
+    {% for m in membros %}
+      {% if m.role.value != 'DONO' or eh_dono %}
+      <form method="post" action="/minhaagenda/equipe/{{ m.id }}/profissional" class="card" style="padding:1rem; box-shadow:none;">{{ csrf_input() }}
+        <input type="hidden" name="voltar" value="/minhaagenda/comissoes">
+        <input type="hidden" name="especialidade" value="{{ m.especialidade or '' }}">
+        {% if m.atende_clientes %}<input type="hidden" name="atende_clientes" value="on">{% endif %}
+        <div style="display:flex; align-items:center; gap:.6rem; margin-bottom:.75rem;">
+          {% if m.foto %}<img src="{{ m.foto }}" alt="" class="avatar">{% else %}<span class="avatar">{{ m.nome[0]|upper }}</span>{% endif %}
+          <div><b>{{ m.nome }}</b><div style="font-size:.78rem; color:var(--text-muted);">{{ m.especialidade or rotulo_papel(m.role) }}</div></div>
+        </div>
+        <label class="form-label" for="pct{{ m.id }}" style="font-size:.8rem;">Percentual</label>
+        <input class="form-control" id="pct{{ m.id }}" name="comissao" inputmode="decimal" placeholder="Ex: 40 (vazio = sem comissão)" value="{{ (m.comissao_percentual|string).replace('.', ',') if m.comissao_percentual is not none else '' }}" style="margin-bottom:.6rem;">
+        {% if eh_dono %}
+          <label class="form-label" for="base{{ m.id }}" style="font-size:.8rem;">Calcular sobre</label>
+          <select class="form-control" id="base{{ m.id }}" name="comissao_base" style="margin-bottom:.6rem;">
+            {% for k, v in bases.items() %}<option value="{{ k }}" {% if (m.comissao_base or 'VALOR') == k %}selected{% endif %}>{{ v|capitalize }}</option>{% endfor %}
+          </select>
+          <label class="form-label" for="esc{{ m.id }}" style="font-size:.8rem;">Quais atendimentos contam</label>
+          <select class="form-control" id="esc{{ m.id }}" name="comissao_escopo" style="margin-bottom:.75rem;">
+            {% for k, v in escopos.items() %}<option value="{{ k }}" {% if (m.comissao_escopo or 'PROPRIOS') == k %}selected{% endif %}>{{ v|capitalize }}</option>{% endfor %}
+          </select>
+        {% else %}
+          <div style="font-size:.82rem; color:var(--text-muted); margin-bottom:.75rem;">{{ descrever_regra(m) }}</div>
+        {% endif %}
+        <button class="btn btn-sm btn-outline" style="width:100%;">Salvar regra</button>
+      </form>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

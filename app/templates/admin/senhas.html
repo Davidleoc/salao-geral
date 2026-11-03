@@ -1,0 +1,55 @@
+{# Pedidos de nova senha — routes/admin_seguranca.py #}
+{% extends "admin/admin_base.html" %}
+{% block title %}Pedidos de nova senha — Admin SaaS{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:2rem;">
+  <h1 style="font-size:1.75rem; font-weight:800; color:#1e1b4b;">Pedidos de nova senha</h1>
+  <p style="color:var(--text-muted); font-size:.95rem;">Quem clicou em “Esqueci minha senha”. Confira se o pedido faz sentido e envie o link: ele vai só para o e-mail cadastrado,
+    vale 24 horas e funciona uma única vez. Você nunca vê nem escolhe a senha.</p>
+</div>
+
+<div class="card" style="margin-bottom:1.75rem;">
+  <h2 class="card-title" style="margin-bottom:1rem;">Aguardando ({{ pendentes|length }})</h2>
+  {% if pendentes %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Pessoa</th><th>Salão</th><th>Pedido em</th><th>IP</th><th style="text-align:right;">Ações</th></tr></thead>
+    <tbody>
+    {% for p in pendentes %}
+      {% set u = p.usuario %}
+      <tr>
+        <td><b>{{ u.nome if u else '—' }}</b><div style="font-size:.8rem; color:var(--text-muted);">{{ u.email if u else '' }} · {{ rotulo_papel(u.role) if u else '' }}</div></td>
+        <td>{% if u and u.salao %}<a href="/admin/saloes/{{ u.salao_id }}">{{ u.salao.nome }}</a>{% else %}Administração{% endif %}</td>
+        <td style="font-size:.85rem;">{{ p.criado_em.strftime('%d/%m/%Y %H:%M') if p.criado_em else '' }}</td>
+        <td style="font-family:var(--mono); font-size:.8rem;">{{ p.ip or '—' }}</td>
+        <td style="text-align:right; white-space:nowrap;">
+          <form action="/admin/senhas/{{ p.id }}/enviar" method="post" style="display:inline;">{{ csrf_input() }}
+            <button class="btn btn-sm btn-primary" style="background:#7c3aed;">{{ icon('mail', 14) }} Enviar link por e-mail</button></form>
+          <form action="/admin/senhas/{{ p.id }}/descartar" method="post" style="display:inline;" onsubmit="return confirm('Descartar este pedido?');">{{ csrf_input() }}
+            <button class="btn btn-sm btn-outline">Descartar</button></form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+    <p style="color:var(--text-muted); text-align:center; padding:2rem 0;">Nenhum pedido pendente.</p>
+  {% endif %}
+</div>
+
+{% if historico %}
+<div class="card">
+  <h2 class="card-title" style="margin-bottom:1rem;">Atendidos recentemente</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Pessoa</th><th>Resultado</th><th>Quando</th></tr></thead>
+    <tbody>
+    {% for p in historico %}
+      <tr><td>{{ p.usuario.nome if p.usuario else '—' }}</td>
+        <td><span class="badge {{ 'badge-success' if p.status == 'ENVIADO' else 'badge-neutral' }}">{{ 'Link enviado' if p.status == 'ENVIADO' else 'Descartado' }}</span></td>
+        <td style="font-size:.85rem;">{{ p.atendido_em.strftime('%d/%m/%Y %H:%M') if p.atendido_em else '' }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endif %}
+{% endblock %}

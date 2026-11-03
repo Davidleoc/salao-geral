@@ -1,0 +1,154 @@
+{% extends "painel/painel_base.html" %}
+{% block title %}Dashboard — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:700;">Olá, {{ usuario.nome.split()[0] }}!</h1>
+    <p style="color:var(--text-muted); font-size:0.95rem;">Aqui está o resumo do seu salão hoje ({{ hoje.strftime('%d/%m/%Y') }}).</p>
+  </div>
+  <a href="/minhaagenda/agenda/novo" class="btn btn-primary">+ Novo Agendamento</a>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-label">Agendamentos Hoje</div>
+    <div class="kpi-value">{{ agendamentos_hoje|length }}</div>
+    <div class="kpi-sub">Para realizar no dia</div>
+  </div>
+  
+  <div class="kpi-card">
+    <div class="kpi-label">Atendimentos no Mês</div>
+    <div class="kpi-value">{{ total_mes }}</div>
+    <div class="kpi-sub">Agendados/Concluídos</div>
+  </div>
+  
+  <div class="kpi-card">
+    <div class="kpi-label">Faturamento Realizado</div>
+    <div class="kpi-value">R$ {{ "%.2f"|format(faturamento_realizado) }}</div>
+    <div class="kpi-sub">{{ atendimentos_concluidos }} serviços concluídos</div>
+  </div>
+  
+  <div class="kpi-card">
+    <div class="kpi-label">Ticket Médio</div>
+    <div class="kpi-value">R$ {{ "%.2f"|format(ticket_medio) }}</div>
+    <div class="kpi-sub">Por atendimento realizado</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-label">Clientes Novos / Recorrentes</div>
+    <div class="kpi-value">{{ clientes_novos }} <span style="font-size:1.1rem; color:var(--text-muted); font-weight:normal;">/ {{ clientes_recorrentes_count }}</span></div>
+    <div class="kpi-sub">Novos no mês vs Recorrentes</div>
+  </div>
+</div>
+
+<!-- Barra de destaques analíticos -->
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top:1.5rem;">
+  <div class="card">
+    <h3 class="card-title" style="margin-bottom:0.75rem;">{{ icon('star', 18) }} Serviço Mais Procurado</h3>
+    <div style="font-size:1.35rem; font-weight:700; color:var(--brand);">
+      {{ servico_top_nome }}
+    </div>
+    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;">
+      {{ servico_top_qtd }} agendamentos registrados neste mês
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="card-title" style="margin-bottom:0.75rem;">{{ icon('coin', 18) }} Previsão de Faturamento</h3>
+    <div style="font-size:1.35rem; font-weight:700; color:var(--success);">
+      R$ {{ "%.2f"|format(faturamento_previsto) }}
+    </div>
+    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;">
+      Em agendamentos futuros confirmados
+    </div>
+  </div>
+</div>
+
+{% if ranking_servicos %}
+<div class="card" style="margin-top: 1.5rem;">
+  <div class="card-header">
+    <h2 class="card-title">Ranking de Serviços (Top Faturamento no Mês)</h2>
+    <a href="/minhaagenda/relatorios" style="font-size:0.85rem; color:var(--brand); text-decoration:none; font-weight:600;">Ver todos os relatórios →</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Posição</th>
+          <th>Serviço</th>
+          <th>Atendimentos Concluídos</th>
+          <th>Faturamento Gerado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for nome_srv, qtd_srv, total_srv in ranking_servicos %}
+        <tr>
+          <td style="font-weight:700; color:var(--brand);">#{{ loop.index }}</td>
+          <td style="font-weight:600;">{{ nome_srv }}</td>
+          <td>{{ qtd_srv }}</td>
+          <td style="font-weight:700; color:var(--success);">R$ {{ "%.2f"|format(total_srv or 0) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top: 2rem;">
+  <div class="card-header">
+    <h2 class="card-title">Próximos agendamentos de hoje</h2>
+    <a href="/minhaagenda/agenda" style="font-size:0.875rem; color:var(--brand); text-decoration:none; font-weight:500;">Ver agenda completa →</a>
+  </div>
+  
+  {% if agendamentos_hoje %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Cliente</th>
+            <th>Serviço</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for agendamento in agendamentos_hoje %}
+          <tr>
+            <td style="font-weight:600;">{{ agendamento.hora_inicio.strftime('%H:%M') }}</td>
+            <td>
+              <a href="/minhaagenda/clientes/{{ agendamento.cliente_id }}" style="color:var(--text); text-decoration:none; font-weight:500;">
+                {{ agendamento.cliente.nome }}
+              </a>
+              <div style="font-size:0.8rem; color:var(--text-muted);">{{ agendamento.cliente.telefone }}</div>
+            </td>
+            <td>{{ agendamento.servico.nome }}</td>
+            <td>
+              {% if agendamento.status == 'AGENDADO' %}
+                <span class="badge badge-warning">Agendado</span>
+              {% elif agendamento.status == 'CONFIRMADO' %}
+                <span class="badge badge-info">Confirmado</span>
+              {% elif agendamento.status == 'CONCLUIDO' %}
+                <span class="badge badge-success">Concluído</span>
+              {% else %}
+                <span class="badge badge-neutral">{{ agendamento.status|status_label }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="/minhaagenda/agenda/{{ agendamento.id }}" class="btn btn-sm btn-outline">Detalhes</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">
+      <div style="font-size:2rem; margin-bottom:1rem;">☕</div>
+      Nenhum agendamento pendente para hoje.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

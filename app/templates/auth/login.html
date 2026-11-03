@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% set t = textos.login %}{# Textos: app/textos/login.py #}
+{% block title %}{{ t.PAGINA_TITULO }}{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-login.svg" /><link rel="apple-touch-icon" href="/static/img/fav-login.svg" />{% endblock %}
+
+{% block head %}
+<style>
+  .login-brand-mark { display:flex; align-items:center; gap:.6rem; }
+  .login-brand-mark .m { width:40px; height:40px; border-radius:11px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; }
+  .login-feature-item .icon { width:30px; height:30px; background:rgba(255,255,255,.18); border-radius:9px; display:flex; align-items:center; justify-content:center; }
+  .input-wrap { position:relative; }
+  .input-wrap > .lead { position:absolute; left:.9rem; top:50%; transform:translateY(-50%); color:var(--text-light); pointer-events:none; display:flex; }
+  .input-wrap .form-control { padding-left:2.6rem; }
+  .pw-toggle { position:absolute; right:.6rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); padding:.25rem; display:flex; border-radius:6px; }
+  .pw-toggle:hover { color:var(--brand); background:var(--brand-light); }
+  .login-trust { display:flex; align-items:center; justify-content:center; gap:.4rem; margin-top:1.5rem; font-size:.8rem; color:var(--text-light); }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="auth-layout">
+
+  <!-- ── Painel esquerdo: branding ── -->
+  <div class="auth-brand">
+    <div class="auth-brand-logo login-brand-mark">
+      <span class="m">{{ icon('scissors', 22) }}</span>
+      <span>{{ t.MARCA }}</span>
+    </div>
+    <div class="auth-brand-tagline">{{ t.CHAMADA }}</div>
+    <p class="auth-brand-sub">{{ t.SUBTITULO }}</p>
+
+    <div class="auth-features">
+      {% for d in t.DESTAQUES %}
+      <div class="auth-feature-item login-feature-item">
+        <span class="icon">{{ icon(d.icone, 16) }}</span>
+        {{ d.texto }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Painel direito: formulário ── -->
+  <div class="auth-form-panel">
+    <div class="auth-form-box">
+
+      <h1>{{ t.TITULO }}</h1>
+      <p class="subtitle">{{ t.TEXTO }}</p>
+
+      {% if request.query_params.get('mensagem') %}
+      <div class="alert alert-success">{{ icon('check-circle', 16) }} {{ request.query_params.get('mensagem') }}</div>
+      {% endif %}
+      {% if erro %}
+      <div class="alert alert-danger">{{ icon('ban', 16) }} <span>{{ erro }}{% if nao_verificado %} <a href="/reenviar-verificacao" style="color:inherit; font-weight:700;">Reenviar link</a>{% endif %}</span></div>
+      {% endif %}
+
+      <form method="post" action="/minhaagenda/login" autocomplete="on">{{ csrf_input() }}
+        <div class="form-group">
+          <label class="form-label" for="email">{{ t.EMAIL }}</label>
+          <div class="input-wrap">
+            <span class="lead">{{ icon('mail', 18) }}</span>
+            <input class="form-control {% if erro %}is-invalid{% endif %}" type="email" id="email" name="email"
+                   placeholder="{{ t.EMAIL_PLACEHOLDER }}" autocomplete="email" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="senha">
+            {{ t.SENHA }}
+            <a href="/minhaagenda/recuperar-senha" style="float:right; font-size:.8rem; font-weight:500; color:var(--brand)">{{ t.ESQUECI }}</a>
+          </label>
+          <div class="input-wrap">
+            <span class="lead">{{ icon('lock', 18) }}</span>
+            <input class="form-control {% if erro %}is-invalid{% endif %}" type="password" id="senha" name="senha"
+                   placeholder="••••••••" autocomplete="current-password" required />
+            <button type="button" class="pw-toggle" id="pwToggle" onclick="toggleSenha()" title="Mostrar / ocultar senha" aria-label="Mostrar ou ocultar senha">
+              {{ icon('eye', 18) }}
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top:.5rem">{{ t.BOTAO }}</button>
+      </form>
+
+      <div class="auth-links">
+        {{ t.SEM_CONTA }}
+        <a href="/contratar">{{ t.CONTRATAR }}</a>
+      </div>
+
+      <div class="login-trust">
+        {{ icon('lock', 14) }} {{ t.RODAPE }}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ICON_EYE = `{{ icon('eye', 18) }}`;
+const ICON_EYE_OFF = `{{ icon('eye-off', 18) }}`;
+function toggleSenha() {
+  const input = document.getElementById('senha');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  document.getElementById('pwToggle').innerHTML = show ? ICON_EYE_OFF : ICON_EYE;
+}
+</script>
+{% endblock %}

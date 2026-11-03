@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Contratar Plano {{ plano.nome }} — MeuAgendamento{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ asset('css/contratar-form.css') }}" />
+{% endblock %}
+
+{% block body %}
+<div class="checkout-page">
+
+  <header class="checkout-nav">
+    <a href="/contratar" class="checkout-brand">
+      <img src="/static/img/favicon.svg" alt="" width="30" height="30">
+      <span>MeuAgendamento</span>
+    </a>
+    <a href="/contratar#planos" class="btn-back">← Escolher outro plano</a>
+  </header>
+
+  <div class="checkout-container">
+
+    <div>
+      <div style="margin-bottom: 1.75rem;">
+        <span class="badge badge-purple" style="font-size: .78rem; margin-bottom: .5rem;">Passo 1 de 2</span>
+        <h1 style="font-size: 1.9rem; font-weight: 800; color: #111827; letter-spacing: -.5px; margin: .25rem 0;">Cadastre seu negócio</h1>
+        <p style="color: var(--text-muted); font-size: .95rem;">Informe os dados do seu negócio e crie o acesso do administrador.</p>
+      </div>
+
+      {% if erro %}
+        <div class="alert alert-danger" style="margin-bottom: 1.5rem;" role="alert"><span>⚠</span><div>{{ erro }}</div></div>
+      {% endif %}
+
+      <div class="card" style="padding: 2.25rem;" data-rv>
+        <form method="post" action="/contratar/{{ plano.id }}" id="formContratacao" data-preco-mensal="{{ plano.preco_mensal }}" data-preco-anual="{{ plano.preco_anual }}" novalidate>{{ csrf_input() }}
+
+          <h2 class="sec-title" style="display:flex;align-items:center;gap:.5rem;"><span style="color:var(--brand);">{{ icon('store',20) }}</span> Dados do negócio</h2>
+
+          <div class="form-group">
+            <label class="form-label" for="nome_salao">Nome do negócio *</label>
+            <input type="text" id="nome_salao" name="nome_salao" class="form-control" value="{{ form_data.get('nome_salao', '') }}" placeholder="Ex: Studio Bella, Barbearia Dom Bigode" required minlength="2" maxlength="200">
+            <span class="field-error">Informe o nome do negócio (mínimo 2 caracteres).</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="slug">Endereço da sua página *</label>
+            <input type="text" id="slug" name="slug" class="form-control" value="{{ form_data.get('slug', '') }}" placeholder="studio-bella" required minlength="3" maxlength="100" pattern="^[a-z0-9]+(-[a-z0-9]+)*$" autocapitalize="off" spellcheck="false">
+            <span class="field-error">Use pelo menos 3 caracteres: letras minúsculas, números e hífens.</span>
+            <div class="slug-preview">Seu link público: <strong>meuagendamento.com/<span id="slugPreviewText">{{ form_data.get('slug') or 'seu-negocio' }}</span></strong></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="telefone">WhatsApp / telefone de contato *</label>
+            <input type="tel" id="telefone" name="telefone" class="form-control" value="{{ form_data.get('telefone', '') }}" placeholder="(11) 98888-7777" required inputmode="numeric" autocomplete="tel" maxlength="15">
+            <span class="field-error">Telefone inválido. Digite o DDD e o número, apenas números.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="documento">CPF ou CNPJ de quem contrata *</label>
+            <input type="text" id="documento" name="documento" class="form-control" value="{{ form_data.get('documento', '') }}" placeholder="000.000.000-00 ou 00.000.000/0000-00" required inputmode="numeric" maxlength="18" autocomplete="off">
+            <span class="field-error">CPF ou CNPJ inválido. Confira os números.</span>
+            <small class="hint">Usado só para a cobrança e para emitir recibo. O teste grátis é um por CPF/CNPJ.</small>
+          </div>
+
+          <div class="form-group" style="margin-top: 1.5rem;">
+            <label class="form-label">Periodicidade de cobrança *</label>
+            <div class="grid-2">
+              <label class="period-opt">
+                <input type="radio" name="periodicidade" value="MENSAL" {% if periodicidade_selecionada != 'ANUAL' %}checked{% endif %} onchange="atualizarResumo()" style="accent-color: var(--brand);">
+                <div>
+                  <div style="font-weight: 700;">Mensal</div>
+                  <div style="font-size: .85rem; color: var(--text-muted);">R$ {{ plano.preco_mensal|brl }}/mês</div>
+                </div>
+              </label>
+              <label class="period-opt">
+                <input type="radio" name="periodicidade" value="ANUAL" {% if periodicidade_selecionada == 'ANUAL' %}checked{% endif %} onchange="atualizarResumo()" style="accent-color: var(--brand);">
+                <div>
+                  <div style="font-weight: 700;">Anual <span class="badge badge-success" style="font-size: .65rem;">Desconto</span></div>
+                  <div style="font-size: .85rem; color: var(--text-muted);">R$ {{ plano.preco_anual|brl }}/ano</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <h2 class="sec-title" style="display:flex;align-items:center;gap:.5rem;"><span style="color:var(--brand);">{{ icon('users',20) }}</span> Responsável e acesso</h2>
+
+          <div class="form-group">
+            <label class="form-label" for="nome_responsavel">Seu nome completo *</label>
+            <input type="text" id="nome_responsavel" name="nome_responsavel" class="form-control" value="{{ form_data.get('nome_responsavel', '') }}" placeholder="Ex: Maria Eduarda Silva" required maxlength="200" autocomplete="name">
+            <span class="field-error">Informe nome e sobrenome, apenas letras.</span>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="email">E-mail *</label>
+              <input type="email" id="email" name="email" class="form-control" value="{{ form_data.get('email', '') }}" placeholder="voce@exemplo.com" required maxlength="255" autocomplete="email" autocapitalize="off" spellcheck="false">
+              <span class="field-error" id="emailErro">E-mail inválido.</span>
+              <span class="hint" id="emailSugestao" style="display:none;"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="confirmar_email">Confirme o e-mail *</label>
+              <input type="email" id="confirmar_email" name="confirmar_email" class="form-control" value="{{ form_data.get('confirmar_email', '') }}" placeholder="Repita o e-mail" required maxlength="255" autocomplete="off" autocapitalize="off" spellcheck="false" onpaste="return false">
+              <span class="field-error">Os e-mails não são iguais.</span>
+            </div>
+          </div>
+          <small class="hint" style="margin-top:-.75rem; margin-bottom:1.25rem;">Vamos enviar um <strong>link de confirmação</strong> para este e-mail — é ele que libera o teste grátis e o login no painel.</small>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="senha">Crie uma senha *</label>
+              <input type="password" id="senha" name="senha" class="form-control" placeholder="Mínimo 8, com letras e números" required minlength="8" autocomplete="new-password">
+              <span class="field-error">Mínimo 8 caracteres, com letras e números.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="confirmar_senha">Confirme a senha *</label>
+              <input type="password" id="confirmar_senha" name="confirmar_senha" class="form-control" placeholder="Repita a senha" required minlength="8" autocomplete="new-password">
+              <span class="field-error">As senhas não coincidem.</span>
+            </div>
+          </div>
+
+          <label class="terms-box" style="margin-top: .5rem;">
+            <input type="checkbox" id="aceite_termos" name="aceite_termos" required>
+            <span>Li e aceito os <a href="/termos" target="_blank" rel="noopener" style="color: var(--brand); font-weight: 600;">Termos de Uso e a Política de Privacidade (LGPD)</a>, incluindo o acesso do administrador do sistema aos dados de vendas e custos exclusivamente para garantir o funcionamento do serviço.</span>
+          </label>
+          <span class="field-error" id="termosErro">Você precisa aceitar os termos para continuar.</span>
+
+          <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <button type="submit" class="btn btn-primary" style="padding: 1rem; font-size: 1.05rem; font-weight: 700;">Começar meus {{ dias_teste }} dias grátis →</button>
+            <div style="text-align: center; font-size: .8rem; color: var(--text-muted); margin-top: .75rem;">{{ icon('lock',14) }} Sem cartão de crédito. Nada é cobrado automaticamente.</div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <aside class="checkout-summary-card" data-rv>
+      <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: .75rem;">Resumo do plano</h3>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+        <div>
+          <div style="font-size: 1.2rem; font-weight: 800; color: var(--brand);">Plano {{ plano.nome }}</div>
+          <span style="font-size: .82rem; color: var(--text-muted);" id="resumoCiclo">Cobrança mensal</span>
+        </div>
+        <div style="font-size: 1.35rem; font-weight: 800;" id="resumoValor">R$ {{ plano.preco_mensal|brl }}</div>
+      </div>
+
+      <div style="background: var(--bg); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.5rem; font-size: .88rem;">
+        <div style="font-weight: 700; margin-bottom: .5rem;">Incluso no seu plano:</div>
+        <ul style="list-style: none; display: grid; gap: .4rem; color: #4b5563;">
+          <li>✓ Agenda online 24h com link próprio</li>
+          <li>✓ Controle de custos e lucro por serviço</li>
+          <li>✓ Até {{ plano.max_usuarios }} profissionais</li>
+          <li>✓ {{ (plano.max_servicos ~ " serviços") if plano.max_servicos is not none else "Serviços ilimitados" }}</li>
+          <li>✓ {{ plano.historico_meses }} meses de histórico</li>
+          <li>{{ "✓" if plano.max_fotos else "✕" }} Aba “Sobre”{% if plano.max_fotos %} com até {{ plano.max_fotos }} fotos{% else %} sem galeria de fotos{% endif %}</li>
+          <li>{{ "✓" if plano.lembretes else "✕" }} Lembretes por e-mail</li>
+          <li>{{ "✓" if plano.exportacao else "✕" }} Exportação CSV para o contador</li>
+          <li>{{ "✓" if plano.permite_gerente else "✕" }} Função de gerente na equipe</li>
+          <li>{{ "✓" if plano.sincronizacao_agenda else "✕" }} Sincronização com Google Agenda</li>
+        </ul>
+      </div>
+
+      <div style="border-top: 1px dashed var(--border); padding-top: 1rem; font-size: .88rem; color: var(--text-muted); line-height: 1.6;">
+        <p style="color:#111827; font-weight:700; margin-bottom:.3rem; display:flex; align-items:center; gap:.4rem;"><span style="color:var(--brand);">{{ icon('mail',16) }}</span> Como funciona?</p>
+        <p>Confirme seu e-mail e use tudo por <strong>{{ dias_teste }} dias grátis</strong>. Faltando {{ dias_aviso }} dias para acabar, enviamos por e-mail o <strong>Pix</strong> com o valor do plano. Se não quiser continuar, é só não pagar.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="{{ asset('js/contratar-form.js') }}"></script>
+{% endblock %}

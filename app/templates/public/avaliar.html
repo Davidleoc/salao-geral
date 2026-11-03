@@ -1,0 +1,52 @@
+{# Avaliação do atendimento pelo cliente — routes/extras.py (link único por atendimento) #}
+{% extends "base.html" %}
+{% block title %}Avalie seu atendimento — {{ salao.nome }}{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-salao.svg" /><link rel="apple-touch-icon" href="/static/img/fav-salao.svg" />{% endblock %}
+
+{% block body %}
+<style>
+  :root { --salon-brand: {{ salao.cor_principal or '#6366f1' }}; }
+  .av-box { max-width: 520px; margin: 3rem auto; padding: 2rem 1.5rem; background: var(--surface); border-radius: 16px; box-shadow: var(--shadow-lg); text-align: center; }
+  .estrelas { display: flex; flex-direction: row-reverse; justify-content: center; gap: .35rem; margin: 1.25rem 0; }
+  .estrelas input { position: absolute; opacity: 0; pointer-events: none; }
+  .estrelas label { cursor: pointer; color: #d1d5db; transition: color .15s, transform .15s; }
+  .estrelas label:hover, .estrelas label:hover ~ label, .estrelas input:checked ~ label { color: #f59e0b; }
+  .estrelas label:hover { transform: scale(1.12); }
+  .estrelas input:focus-visible + label { outline: 2px solid var(--salon-brand); border-radius: 6px; }
+  .estrelas svg { fill: currentColor; }
+  .av-btn { background: var(--salon-brand); color: #fff; border: none; border-radius: 10px; padding: .95rem 1.25rem; width: 100%; font-weight: 700; font-size: 1rem; cursor: pointer; text-decoration: none; display: inline-block; }
+  .av-btn:disabled { opacity: .5; cursor: not-allowed; }
+  @media (max-width: 560px) { .av-box { margin: 1rem; } }
+</style>
+
+<div class="av-box">
+  <div style="font-weight:800; font-size:1.1rem; color:var(--salon-brand); margin-bottom:.25rem;">{{ salao.nome }}</div>
+
+  {% if not enviado %}
+    <h1 style="font-size:1.5rem; font-weight:800; margin-bottom:.4rem;">Como foi seu atendimento?</h1>
+    <p style="color:var(--text-muted);">{{ ag.servico.nome }} em {{ ag.data.strftime('%d/%m/%Y') }}{% if ag.profissional %} com {{ ag.profissional.nome.split()[0] }}{% endif %}</p>
+    <form method="post" action="/avaliar/{{ token }}">{{ csrf_input() }}
+      <div class="estrelas" role="radiogroup" aria-label="Nota de 1 a 5">
+        {% for n in range(5, 0, -1) %}
+          <input type="radio" name="nota" id="n{{ n }}" value="{{ n }}" required onchange="document.getElementById('btnAv').disabled=false">
+          <label for="n{{ n }}" title="{{ n }} estrela{{ 's' if n > 1 }}">{{ icon('star', 40, 1.2) }}</label>
+        {% endfor %}
+      </div>
+      <textarea name="comentario" class="form-control" rows="3" maxlength="800" placeholder="Quer contar mais? (opcional)"></textarea>
+      <p style="font-size:.78rem; color:var(--text-light); margin:.6rem 0 1rem;">Sua avaliação é vista só pela equipe do {{ salao.nome }}.</p>
+      <button class="av-btn" id="btnAv" disabled>Enviar avaliação</button>
+    </form>
+  {% else %}
+    <div style="color:var(--salon-brand); margin:1rem 0;">{{ icon('check-circle', 56, 1.5) }}</div>
+    <h1 style="font-size:1.5rem; font-weight:800; margin-bottom:.4rem;">Obrigado pela avaliação!</h1>
+    <div style="color:#f59e0b; margin:.4rem 0 1rem;">{% for i in range(av.nota) %}{{ icon('star', 22, 1.2) }}{% endfor %}</div>
+    {% if av.nota >= 4 and salao.link_avaliacao_google %}
+      <p style="color:var(--text-muted); margin-bottom:1.25rem;">Que bom que gostou! Ajudaria muito o {{ salao.nome }} se você deixasse essa avaliação também no Google — leva menos de um minuto.</p>
+      <a href="{{ salao.link_avaliacao_google }}" target="_blank" rel="noopener nofollow" class="av-btn">Avaliar no Google</a>
+    {% else %}
+      <p style="color:var(--text-muted);">Sua opinião foi enviada para a equipe do {{ salao.nome }}.</p>
+    {% endif %}
+    <a href="/{{ salao.slug }}" style="display:inline-block; margin-top:1.25rem; color:var(--text-muted); font-size:.9rem;">Ver página do salão</a>
+  {% endif %}
+</div>
+{% endblock %}

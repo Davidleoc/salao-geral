@@ -1,0 +1,126 @@
+{#
+  Agendamento pelo cliente final — rota: routes/public.py · estilos: static/css/agendar.css · js: static/js/agendar.js
+  Passos: profissional → dia → horário → dados. Sem horário no dia: lista de espera (routes/extras.py).
+#}
+{% extends "base.html" %}
+{% block title %}Agendar {{ servico.nome }} — {{ salao.nome }}{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-salao.svg" /><link rel="apple-touch-icon" href="/static/img/fav-salao.svg" />{% endblock %}
+{% block head %}
+<style>:root { --salon-brand: {{ salao.cor_principal }}; --salon-accent: {{ salao.cor_secundaria }}; }</style>
+<link rel="stylesheet" href="{{ asset('css/agendar.css') }}" />
+{% endblock %}
+
+{% block body %}
+{% set passo_prof = profissionais|length > 0 %}
+<div style="max-width: 640px; margin: 0 auto; padding: 2rem 1rem;">
+
+  <a href="/{{ salao.slug }}" class="btn-back">← Voltar para serviços</a>
+
+  <div style="margin: 2rem 0 1.5rem;">
+    <h1 style="font-size:1.8rem; font-weight:800;">Agendar serviço</h1>
+    <div style="background:var(--surface-2); padding:1rem; border-radius:10px; margin-top:1rem; display:flex; justify-content:space-between; gap:1rem;">
+      <div>
+        <strong>{{ servico.nome }}</strong>
+        <div style="font-size:0.85rem; color:var(--text-muted);">{{ icon('clock', 14) }} {{ servico.duracao_minutos }} min</div>
+      </div>
+      <div style="font-weight:700;">R$ {{ servico.preco|brl }}</div>
+    </div>
+  </div>
+
+  {% if erro %}<div class="alert alert-danger">⚠ {{ erro }}</div>{% endif %}
+  {% if mensagem %}<div class="alert alert-success">✓ {{ mensagem }}</div>{% endif %}
+
+  <form method="post" action="/{{ salao.slug }}/agendar/{{ servico.id }}" id="formAgendamento"
+        data-slug="{{ salao.slug }}" data-servico="{{ servico.id }}">{{ csrf_input() }}
+
+    {% if passo_prof %}
+    <div class="passo">
+      <h3>1. Quem vai te atender?</h3>
+      <div class="prof-grid" role="radiogroup" aria-label="Profissional">
+        <label class="prof-card">
+          <input type="radio" name="profissional_id" value="qualquer" checked>
+          <span class="avatar">{{ icon('users', 20) }}</span>
+          <span><b>Sem preferência de profissional</b><small>Quem estiver livre no horário</small></span>
+        </label>
+        {% for p in profissionais %}
+        <label class="prof-card">
+          <input type="radio" name="profissional_id" value="{{ p.id }}">
+          {% if p.foto %}<img src="{{ p.foto }}" alt="" class="avatar">{% else %}<span class="avatar">{{ p.nome[0]|upper }}</span>{% endif %}
+          <span><b>{{ p.nome }}{% if p.especialidade %} — {{ p.especialidade }}{% endif %}</b><small>Ver os horários livres de {{ p.nome.split()[0] }}</small></span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+      <input type="hidden" name="profissional_id" value="{{ profissionais[0].id if profissionais else '' }}">
+    {% endif %}
+
+    <div class="passo">
+      <h3>{{ 2 if passo_prof else 1 }}. Escolha o dia</h3>
+      <input type="date" id="data_agendamento" name="data" class="form-control" style="font-size:1.1rem;"
+             min="{{ hoje }}" max="{{ limite }}" value="{{ hoje }}" required>
+    </div>
+
+    <div class="passo">
+      <h3>{{ 3 if passo_prof else 2 }}. Escolha o horário</h3>
+      <input type="hidden" id="hora_selecionada" name="hora" required>
+      <div id="loading_horarios" style="display:none; color:var(--text-muted); padding:1rem;">Buscando horários disponíveis…</div>
+      <div id="grid_horarios" class="time-grid"></div>
+      <div id="msg_sem_horario" class="sem-horario" style="display:none;">
+        <b>Nenhum horário livre neste dia.</b> Escolha outra data ou
+        <button type="button" class="link-espera" id="abrirEspera">entre na lista de espera</button> — avisamos se alguém desmarcar.
+      </div>
+    </div>
+
+    <div id="secao_dados" style="display:none; opacity:0; transition: 0.5s;">
+      <h3 style="font-size:1.1rem; margin-bottom:1rem;">{{ 4 if passo_prof else 3 }}. Seus dados</h3>
+      <div class="form-group">
+        <label class="form-label" for="ag_nome">Nome completo</label>
+        <input type="text" id="ag_nome" name="nome" class="form-control" required maxlength="200" autocomplete="name" placeholder="Como quer ser chamado?">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ag_tel">WhatsApp (celular)</label>
+        <input type="tel" id="ag_tel" name="telefone" class="form-control campo-tel" required inputmode="numeric" maxlength="15" autocomplete="tel" placeholder="(11) 90000-0000">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ag_email">E-mail <span style="color:var(--text-muted); font-weight:400;">(opcional)</span></label>
+        <input type="email" id="ag_email" name="email" class="form-control" maxlength="255" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@exemplo.com">
+        <small style="color:var(--text-muted); font-size:.78rem;">Para receber a confirmação e o lembrete do seu horário.</small>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ag_pag">Forma de pagamento (no local)</label>
+        <select id="ag_pag" name="forma_pagamento" class="form-control" required>
+          <option value="">Selecione…</option>
+          <option value="PIX">Pix</option><option value="DINHEIRO">Dinheiro</option>
+          <option value="CREDITO">Cartão de crédito</option><option value="DEBITO">Cartão de débito</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ag_obs">Observações (opcional)</label>
+        <textarea id="ag_obs" name="observacoes" class="form-control" rows="2" maxlength="1000" placeholder="Ex: alguma alergia ou preferência…"></textarea>
+      </div>
+      <div id="ag_erro" class="alert alert-danger" style="display:none;"></div>
+      <p class="aviso-privacidade">{{ icon('lock', 14) }} Seus dados (nome, telefone e e-mail) serão usados pelo <b>{{ salao.nome }}</b> apenas para gerenciar seu agendamento. <a href="/termos#clientes-finais" target="_blank">Saiba mais</a>.</p>
+      <button type="submit" class="salon-btn" style="margin-top:1rem;">Confirmar agendamento</button>
+    </div>
+  </form>
+
+  <!-- Lista de espera (aparece quando o dia está lotado) -->
+  <form method="post" action="/{{ salao.slug }}/lista-espera" id="formEspera" class="espera" hidden>{{ csrf_input() }}
+    <input type="hidden" name="servico_id" value="{{ servico.id }}">
+    <input type="hidden" name="data" id="espera_data">
+    <input type="hidden" name="profissional_id" id="espera_prof">
+    <h3 style="font-size:1.05rem; margin-bottom:.3rem;">Lista de espera — <span id="espera_data_txt"></span></h3>
+    <p style="color:var(--text-muted); font-size:.88rem; margin-bottom:1rem;">Se alguém desmarcar neste dia, você é avisado por ordem de chegada.</p>
+    <div class="form-group"><label class="form-label" for="e_nome">Nome</label><input class="form-control" id="e_nome" name="nome" required maxlength="200"></div>
+    <div class="form-group"><label class="form-label" for="e_tel">WhatsApp</label><input class="form-control campo-tel" id="e_tel" name="telefone" required inputmode="numeric" maxlength="15" placeholder="(11) 90000-0000"></div>
+    <div class="form-group"><label class="form-label" for="e_email">E-mail (opcional — para receber o aviso)</label><input class="form-control" type="email" id="e_email" name="email" maxlength="255"></div>
+    <p class="aviso-privacidade">{{ icon('lock', 14) }} Usaremos seus dados só para avisar sobre uma vaga no <b>{{ salao.nome }}</b>. <a href="/termos#clientes-finais" target="_blank">Saiba mais</a>.</p>
+    <button type="submit" class="salon-btn">Entrar na lista de espera</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ asset('js/agendar.js') }}"></script>
+{% endblock %}

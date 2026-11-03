@@ -1,0 +1,57 @@
+{% extends "painel/painel_base.html" %}
+{% block title %}Clientes — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:700;">Clientes</h1>
+    <p style="color:var(--text-muted); font-size:0.95rem;">Base de clientes do salão.</p>
+  </div>
+  <a href="/minhaagenda/clientes/novo" class="btn btn-primary">+ Novo Cliente</a>
+</div>
+
+<div class="card">
+  <div class="card-header" style="display:flex; gap:1rem;">
+    <form method="get" action="/minhaagenda/clientes" style="display:flex; flex:1; gap:.5rem;">
+      <input type="text" name="busca" value="{{ busca }}" class="form-control" placeholder="Buscar por nome ou telefone..." style="max-width:400px;">
+      <button type="submit" class="btn btn-outline">Buscar</button>
+      {% if busca %}
+        <a href="/minhaagenda/clientes" class="btn btn-outline" style="color:var(--text-muted);">Limpar</a>
+      {% endif %}
+    </form>
+  </div>
+  
+  {% if clientes %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>E-mail</th>
+            <th>Cadastro</th>
+            <th style="text-align:right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cliente in clientes %}
+          <tr>
+            <td style="font-weight:600; color:var(--text);">{{ cliente.nome }}</td>
+            <td>{{ cliente.telefone }}</td>
+            <td>{{ cliente.email or '--' }}</td>
+            <td style="font-size:0.875rem; color:var(--text-muted);">{{ cliente.criado_em.strftime('%d/%m/%Y') }}</td>
+            <td style="text-align:right;">
+              <a href="/minhaagenda/clientes/{{ cliente.id }}" class="btn btn-sm btn-outline">Ver Ficha</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">
+      <p style="margin-bottom:1rem;">Nenhum cliente encontrado.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

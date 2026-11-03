@@ -1,0 +1,43 @@
+{% extends "painel/painel_base.html" %}
+{% block title %}{% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %} — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:700;">{% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %}</h1>
+    <p style="color:var(--text-muted); font-size:0.95rem;">Dados cadastrais.</p>
+  </div>
+  <a href="/minhaagenda/clientes{% if cliente %}/{{ cliente.id }}{% endif %}" class="btn-back">← Voltar</a>
+</div>
+
+<div class="card" style="max-width: 600px;">
+  <form method="post" action="{% if cliente %}/minhaagenda/clientes/{{ cliente.id }}{% else %}/minhaagenda/clientes/novo{% endif %}">{{ csrf_input() }}
+    
+    <div class="form-group">
+      <label class="form-label" for="nome">Nome Completo</label>
+      <input class="form-control" type="text" id="nome" name="nome" value="{{ cliente.nome if cliente else '' }}" required />
+    </div>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group">
+        <label class="form-label" for="telefone">WhatsApp / Celular</label>
+        <input class="form-control" type="text" id="telefone" name="telefone" value="{{ cliente.telefone if cliente else '' }}" required placeholder="(11) 90000-0000" />
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="email">E-mail (Opcional)</label>
+        <input class="form-control" type="email" id="email" name="email" value="{{ (cliente.email or '') if cliente else '' }}" />
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label" for="observacoes">Observações / Preferências</label>
+      <textarea class="form-control" id="observacoes" name="observacoes" rows="4" placeholder="Ex: Tem alergia a produto X">{{ (cliente.observacoes or '') if cliente else '' }}</textarea>
+    </div>
+    
+    <div style="margin-top: 1rem; text-align:right;">
+      <button type="submit" class="btn btn-primary">Salvar Cliente</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

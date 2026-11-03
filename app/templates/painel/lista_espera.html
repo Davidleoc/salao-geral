@@ -1,0 +1,45 @@
+{# Lista de espera — routes/extras.py. Quando alguém cancela, o primeiro da fila do dia é avisado automaticamente. #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Lista de espera — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.75rem;">
+  <h1 style="font-size: 1.5rem; font-weight:800;">Lista de espera</h1>
+  <p style="color:var(--text-muted);">Clientes que queriam um dia lotado. Quando um horário desse dia é cancelado, o primeiro da fila recebe aviso
+    (e-mail, se deixou) e você recebe uma notificação para chamar no WhatsApp.</p>
+</div>
+
+{% if por_dia %}
+  {% for dia, itens in por_dia.items() %}
+  <div class="card" style="margin-bottom:1.25rem;">
+    <h2 class="card-title" style="margin-bottom:.9rem;">{{ dia.strftime('%d/%m/%Y') }} <span class="badge badge-neutral">{{ itens|length }}</span></h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Cliente</th><th>Serviço</th><th>Situação</th><th style="text-align:right;">Ações</th></tr></thead>
+      <tbody>
+      {% for i in itens %}
+        <tr>
+          <td style="color:var(--text-muted);">{{ loop.index }}º</td>
+          <td><b>{{ i.nome }}</b>
+            <div style="font-size:.82rem; color:var(--text-muted);">{{ i.telefone }} · <a href="{{ i.telefone|link_whatsapp }}" target="_blank" rel="noopener" style="color:#16a34a;">WhatsApp</a></div></td>
+          <td>{{ i.servico.nome if i.servico else '—' }}{% if i.profissional %}<div style="font-size:.8rem; color:var(--text-muted);">com {{ i.profissional.nome.split()[0] }}</div>{% endif %}</td>
+          <td>{% if i.status == 'AVISADO' %}<span class="badge badge-info">Avisado {{ i.avisado_em.strftime('%d/%m %H:%M') if i.avisado_em else '' }}</span>
+              {% else %}<span class="badge badge-warning">Aguardando</span>{% endif %}</td>
+          <td style="text-align:right; white-space:nowrap;">
+            <form method="post" action="/minhaagenda/lista-espera/{{ i.id }}/status" style="display:inline;">{{ csrf_input() }}
+              <input type="hidden" name="novo_status" value="AGENDADO"><button class="btn btn-sm btn-outline">Já agendou</button></form>
+            <form method="post" action="/minhaagenda/lista-espera/{{ i.id }}/status" style="display:inline;">{{ csrf_input() }}
+              <input type="hidden" name="novo_status" value="REMOVIDO"><button class="btn btn-sm btn-outline" style="color:var(--danger);">Remover</button></form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="card" style="text-align:center; padding:3.5rem 1rem; color:var(--text-muted);">
+    <div style="opacity:.5; margin-bottom:1rem;">{{ icon('clock', 44) }}</div>
+    Ninguém na lista de espera. Quando um dia lotar, sua página oferece a fila automaticamente.
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "painel/painel_base.html" %}
+{% block title %}Configurações — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:700;">Configurações do Salão</h1>
+    <p style="color:var(--text-muted); font-size:0.95rem;">Informações da sua página e contatos.</p>
+  </div>
+  <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+    <a href="/{{ salao.slug }}" target="_blank" class="btn btn-outline">Ver minha página ↗</a>
+    <a href="/minhaagenda/configuracoes/horarios" class="btn btn-outline">Gerenciar Horários</a>
+  </div>
+</div>
+
+<div class="card" style="max-width: 800px;">
+  <form method="post" action="/minhaagenda/configuracoes">{{ csrf_input() }}
+    
+    <h3 style="margin-bottom:1rem; font-size:1.1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Informações Principais</h3>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group">
+        <label class="form-label" for="nome">Nome do Salão</label>
+        <input class="form-control" type="text" id="nome" name="nome" value="{{ salao.nome }}" required />
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Link (Slug Público)</label>
+        <input class="form-control" type="text" value="/{{ salao.slug }}" disabled style="background:var(--surface-2);" />
+        <small style="color:var(--text-muted);">Não pode ser alterado pelo painel.</small>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label" for="descricao">Descrição (Aparece na sua página)</label>
+      <textarea class="form-control" id="descricao" name="descricao" rows="3">{{ salao.descricao or '' }}</textarea>
+    </div>
+
+    <h3 id="sobre" style="margin:2rem 0 1rem; font-size:1.1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; scroll-margin-top: 80px;">Aba “Sobre” da sua página</h3>
+    <div class="form-group">
+      <label class="form-label" for="sobre_txt">Conte a história do seu negócio, diferenciais, equipe, estrutura...</label>
+      <textarea class="form-control" id="sobre_txt" name="sobre" rows="6" maxlength="{{ max_sobre }}" placeholder="Ex: Desde 2015 cuidando da sua beleza com produtos veganos e atendimento personalizado...">{{ salao.sobre or '' }}</textarea>
+      <div style="display:flex; justify-content:space-between; font-size:.78rem; color:var(--text-muted); margin-top:.3rem;">
+        <span>Aparece na aba “Sobre”, ao lado de “Serviços”, em <a href="/{{ salao.slug }}#sobre" target="_blank" style="color:var(--brand);">/{{ salao.slug }}</a></span>
+        <span><span id="sobreCount">{{ (salao.sobre or '')|length }}</span>/{{ max_sobre }}</span>
+      </div>
+    </div>
+
+    <h3 style="margin:2rem 0 1rem; font-size:1.1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Contatos</h3>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group">
+        <label class="form-label" for="telefone">Telefone Principal</label>
+        <input class="form-control" type="text" id="telefone" name="telefone" value="{{ salao.telefone or '' }}" />
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="whatsapp">WhatsApp</label>
+        <input class="form-control" type="text" id="whatsapp" name="whatsapp" value="{{ salao.whatsapp or '' }}" />
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="email_secundario">E-mail de Contato</label>
+        <input class="form-control" type="email" id="email_secundario" name="email_secundario" value="{{ salao.email_secundario or '' }}" />
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="instagram">Instagram (@)</label>
+        <input class="form-control" type="text" id="instagram" name="instagram" value="{{ salao.instagram or '' }}" />
+      </div>
+    </div>
+
+    <h3 style="margin:2rem 0 1rem; font-size:1.1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Endereço</h3>
+    
+    <div class="form-group">
+      <label class="form-label" for="endereco">Rua, Número, Bairro</label>
+      <input class="form-control" type="text" id="endereco" name="endereco" value="{{ salao.endereco or '' }}" />
+    </div>
+    
+    <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem;">
+      <div class="form-group">
+        <label class="form-label" for="cidade">Cidade</label>
+        <input class="form-control" type="text" id="cidade" name="cidade" value="{{ salao.cidade or '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="estado">Estado (UF)</label>
+        <input class="form-control" type="text" id="estado" name="estado" value="{{ salao.estado or '' }}" maxlength="2" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cep">CEP</label>
+        <input class="form-control" type="text" id="cep" name="cep" value="{{ salao.cep or '' }}" />
+      </div>
+    </div>
+    
+    <h3 style="margin:2rem 0 1rem; font-size:1.1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Identidade Visual</h3>
+    
+    <style>
+      .pal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: .6rem; margin-bottom: 1.25rem; }
+      .pal { border: 2px solid var(--border); border-radius: 10px; padding: .45rem; background: #fff; cursor: pointer; font-family: var(--font); font-size: .75rem; color: var(--text-muted); text-align: center; transition: border-color .15s, transform .15s; }
+      .pal:hover { transform: translateY(-2px); }
+      .pal.on { border-color: var(--text); color: var(--text); font-weight: 700; }
+      .pal i { display: block; height: 30px; border-radius: 6px; margin-bottom: .3rem; }
+      .cor-preview { border-radius: 12px; overflow: hidden; border: 1px solid var(--border); max-width: 360px; }
+      .cor-preview .h { padding: 1.25rem; color: #fff; text-align: center; font-weight: 800; }
+      .cor-preview .b { padding: .9rem 1rem; display: flex; justify-content: space-between; align-items: center; font-size: .85rem; }
+      .cor-preview .b em { font-style: normal; color: #fff; padding: .3rem .8rem; border-radius: 999px; font-weight: 700; font-size: .75rem; }
+    </style>
+
+    <label class="form-label">Paletas prontas — clique para aplicar</label>
+    <div class="pal-grid" id="palGrid">
+      {% for nome, c1, c2 in paletas %}
+        <button type="button" class="pal" data-a="{{ c1 }}" data-b="{{ c2 }}" title="{{ nome }}">
+          <i style="background: linear-gradient(135deg, {{ c1 }}, {{ c2 }});"></i>{{ nome }}
+        </button>
+      {% endfor %}
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 1.25rem; align-items:start;">
+      <div class="form-group">
+        <label class="form-label" for="cor_principal">Cor principal (personalizada)</label>
+        <input type="color" id="cor_principal" name="cor_principal" value="{{ salao.cor_principal }}" style="width:100%; height:44px; cursor:pointer; border:1.5px solid var(--border); border-radius:8px; padding:2px;" />
+        <code id="hex1" style="font-size:.8rem; color:var(--text-muted);">{{ salao.cor_principal }}</code>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cor_secundaria">Cor secundária (personalizada)</label>
+        <input type="color" id="cor_secundaria" name="cor_secundaria" value="{{ salao.cor_secundaria }}" style="width:100%; height:44px; cursor:pointer; border:1.5px solid var(--border); border-radius:8px; padding:2px;" />
+        <code id="hex2" style="font-size:.8rem; color:var(--text-muted);">{{ salao.cor_secundaria }}</code>
+      </div>
+      <div>
+        <label class="form-label">Prévia da sua página</label>
+        <div class="cor-preview">
+          <div class="h" id="pvHead">{{ salao.nome }}</div>
+          <div class="b"><span><strong>Serviço exemplo</strong><br><span style="color:var(--text-muted);">45 min · R$ 50,00</span></span><em id="pvBtn">Agendar</em></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const c1 = document.getElementById('cor_principal'), c2 = document.getElementById('cor_secundaria');
+        const head = document.getElementById('pvHead'), btn = document.getElementById('pvBtn');
+        const pals = document.querySelectorAll('.pal');
+        function render() {
+          head.style.background = `linear-gradient(135deg, ${c1.value}, ${c2.value})`;
+          btn.style.background = c1.value;
+          document.getElementById('hex1').textContent = c1.value;
+          document.getElementById('hex2').textContent = c2.value;
+          pals.forEach(p => p.classList.toggle('on', p.dataset.a.toLowerCase() === c1.value.toLowerCase() && p.dataset.b.toLowerCase() === c2.value.toLowerCase()));
+        }
+        pals.forEach(p => p.addEventListener('click', () => { c1.value = p.dataset.a; c2.value = p.dataset.b; render(); }));
+        [c1, c2].forEach(el => el.addEventListener('input', render));
+        render();
+      })();
+    </script>
+
+    <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align:right;">
+      <button type="submit" class="btn btn-primary" style="width:auto;">Salvar Configurações</button>
+    </div>
+  </form>
+</div>
+
+<!-- Fotos da aba Sobre -->
+<div class="card" style="max-width: 800px; margin-top: 1.5rem;">
+  <div class="card-header" style="flex-wrap:wrap; gap:.5rem;">
+    <h3 class="card-title">Fotos da aba “Sobre”</h3>
+    {% if max_fotos %}
+      <span class="badge {{ 'badge-warning' if fotos|length >= max_fotos else 'badge-purple' }}">{{ fotos|length }} de {{ max_fotos }} fotos</span>
+    {% endif %}
+  </div>
+
+  {% if not max_fotos %}
+    <div class="alert alert-warning" style="margin:0;">
+      {{ icon('lock', 14) }} O plano {{ plano.nome if plano else 'atual' }} não inclui galeria de fotos. No <strong>Pro</strong> você pode publicar até 5 fotos e no <strong>Premium</strong> até 10.
+      <a href="/minhaagenda/assinatura" style="color:inherit; font-weight:700; margin-left:.25rem;">Ver planos →</a>
+    </div>
+  {% else %}
+    {% if fotos %}
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:.75rem; margin-bottom:1.25rem;">
+        {% for foto in fotos %}
+          <div style="position:relative; border-radius:10px; overflow:hidden; border:1px solid var(--border); aspect-ratio: 4/3; background:var(--surface-2);">
+            <img src="{{ foto.caminho }}" alt="Foto {{ loop.index }}" loading="lazy" style="width:100%; height:100%; object-fit:cover; display:block;">
+            <form method="post" action="/minhaagenda/configuracoes/fotos/{{ foto.id }}/excluir" onsubmit="return confirm('Remover esta foto?');" style="position:absolute; top:6px; right:6px;">{{ csrf_input() }}
+              <button type="submit" class="btn btn-sm" style="background:rgba(17,24,39,.75); color:#fff; padding:.25rem .55rem; font-size:.75rem;" title="Remover foto">✕ Remover</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color:var(--text-muted); font-size:.9rem; margin-bottom:1rem;">Nenhuma foto ainda. Mostre seu espaço, trabalhos realizados e sua equipe.</p>
+    {% endif %}
+
+    {% if fotos|length < max_fotos %}
+      <form method="post" action="/minhaagenda/configuracoes/fotos" enctype="multipart/form-data" style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">{{ csrf_input() }}
+        <input type="file" name="fotos" accept="image/jpeg,image/png,image/webp" multiple required class="form-control" style="flex:1; min-width:240px;">
+        <button type="submit" class="btn btn-primary" style="width:auto;">Enviar fotos</button>
+      </form>
+      <small style="color:var(--text-muted); display:block; margin-top:.5rem;">JPG, PNG ou WEBP, até {{ max_upload_mb }} MB cada. Você ainda pode enviar {{ max_fotos - fotos|length }} foto(s).</small>
+    {% endif %}
+  {% endif %}
+</div>
+
+<script>
+  (function () {
+    const t = document.getElementById('sobre_txt'), c = document.getElementById('sobreCount');
+    t.addEventListener('input', () => c.textContent = t.value.length);
+  })();
+</script>
+{% endblock %}

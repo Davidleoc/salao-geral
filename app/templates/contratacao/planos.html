@@ -1,0 +1,387 @@
+{#
+  PÁGINA DE VENDAS (/contratar)
+  - Textos ........... app/textos/landing.py
+  - Estilos .......... app/static/css/landing.css
+  - Comportamento .... app/static/js/landing.js
+  - Telas ilustrativas app/templates/contratacao/mockups/
+  - Dados (planos, avaliações) vêm de app/routes/contratacao.py → pagina_planos()
+#}
+{% extends "base.html" %}
+{% set t = textos.landing %}
+
+{% block title %}{{ t.PAGINA.titulo }}{% endblock %}
+
+{% block head %}
+<meta name="description" content="{{ t.PAGINA.descricao_seo }}">
+<link rel="stylesheet" href="{{ asset('css/landing.css') }}" />
+{% endblock %}
+
+{% block body %}
+<div class="lp">
+
+  <!-- ===== Navegação ===== -->
+  <nav class="lp-nav">
+    <div class="lp-wrap">
+      <a href="/contratar" class="lp-brand">
+        <img src="/static/img/favicon.svg" alt="" width="32" height="32">
+        <span>MeuAgendamento</span>
+      </a>
+      <div class="lp-links">
+        <a class="lnk" href="#recursos">{{ t.MENU.recursos }}</a>
+        <a class="lnk" href="#planos">{{ t.MENU.planos }}</a>
+        <a class="lnk" href="#avaliacoes">{{ t.MENU.avaliacoes }}</a>
+        <a href="/minhaagenda/login" class="btn btn-outline btn-sm" style="border-radius: 999px;">{{ t.MENU.entrar }}</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== Topo (hero) ===== -->
+  <header class="lp-hero">
+    <div class="lp-wrap lp-hero-grid">
+      <div>
+        <span class="lp-eyebrow hero-eyebrow h-anim" style="animation-delay:.05s"><span class="live-dot"></span> {{ t.HERO.etiqueta }}</span>
+        <h1 class="h-anim" style="animation-delay:.12s">{{ t.HERO.titulo_antes }} <span>{{ t.HERO.titulo_destaque }}</span> {{ t.HERO.titulo_depois }}</h1>
+        <p class="lp-lead h-anim" style="animation-delay:.2s">{{ t.HERO.texto }}</p>
+        <div class="lp-cta h-anim" style="animation-delay:.28s">
+          <a href="#planos" class="btn btn-primary">{{ t.HERO.botao_principal }} <span class="cta-arrow">→</span></a>
+          <a href="#recursos" class="btn btn-outline">{{ t.HERO.botao_secundario }}</a>
+        </div>
+        <div class="lp-checks h-anim" style="animation-delay:.36s">
+          {% for g in t.HERO.garantias %}<span>{{ g }}</span>{% endfor %}
+        </div>
+      </div>
+
+      <div class="hero-visual h-anim" style="animation-delay:.3s">
+        <div class="hero-badge hb-1" aria-hidden="true">
+          <span class="hb-ic">{{ icon('check', 18) }}</span>
+          <span><b>{{ t.HERO.cartao_1_titulo }}</b><small>{{ t.HERO.cartao_1_texto }}</small></span>
+        </div>
+        <div class="hero-badge hb-2" aria-hidden="true">
+          <span class="hb-ic">{{ icon('coin', 18) }}</span>
+          <span><b>{{ t.HERO.cartao_2_titulo }}</b><small>{{ t.HERO.cartao_2_texto }}</small></span>
+        </div>
+        {% include "contratacao/mockups/hero_agenda.html" %}
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Segmentos (seletor por nicho) ===== -->
+  {% set seg0 = t.SEGMENTOS[0] %}
+  <section class="segs-section" id="segmentos">
+    <div class="lp-wrap">
+      <p class="segs-eyebrow" data-reveal>{{ t.SEGMENTOS_CHAMADA }} <span>{{ t.SEGMENTOS_DICA }}</span></p>
+      <div class="lp-segs" id="segChips" data-reveal>
+        {% for s in t.SEGMENTOS %}
+        <button type="button" class="lp-seg{% if loop.first %} active{% endif %}" data-head="{{ s.nome }}" data-msg="{{ s.mensagem }}" data-tags="{{ s.tags|join('|') }}">{{ icon(s.icone, 18) }} {{ s.nome }}</button>
+        {% endfor %}
+      </div>
+
+      <div class="seg-panel" id="segPanel" data-reveal>
+        <div class="seg-panel-icon" id="segPanelIcon">{{ icon(seg0.icone, 26) }}</div>
+        <div class="seg-panel-body">
+          <h3 id="segPanelHead">{{ seg0.nome }}</h3>
+          <p id="segPanelMsg">{{ seg0.mensagem }}</p>
+          <div class="seg-tags" id="segPanelTags">{% for tag in seg0.tags %}<span>{{ tag }}</span>{% endfor %}</div>
+        </div>
+        <a href="#planos" class="btn btn-primary seg-panel-cta">{{ t.SEGMENTOS_BOTAO }}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Recursos em destaque (texto + tela ilustrativa) ===== -->
+  <section class="lp-section" id="recursos">
+    <div class="lp-wrap">
+      <div class="lp-center" data-reveal>
+        <span class="lp-eyebrow">{{ t.RECURSOS.etiqueta }}</span>
+        <h2 class="lp-h2">{{ t.RECURSOS.titulo }}</h2>
+        <p class="lp-lead">{{ t.RECURSOS.texto }}</p>
+      </div>
+
+      {% for d in t.DESTAQUES %}
+      <div class="lp-feature{% if loop.index is even %} rev{% endif %}"{% if not loop.last %} style="margin-bottom: 6rem;"{% endif %} data-reveal>
+        <div>
+          <span class="lp-eyebrow">{{ d.etiqueta }}</span>
+          <h3>{{ d.titulo }}</h3>
+          <p class="lp-lead">{{ d.texto }}</p>
+          <ul class="lp-bullets">
+            {% for item in d.itens %}<li>{{ item.replace('{paletas}', paletas|length|string) }}</li>{% endfor %}
+          </ul>
+          {% if d.chamada_cores %}
+          <p style="margin-top:1.5rem; font-weight:600;">{{ d.chamada_cores }}</p>
+          <div class="swatches" role="group" aria-label="Cores de exemplo">
+            {% for nome, c1, c2 in paletas %}
+            <button type="button" class="swatch{% if loop.first %} on{% endif %}" style="background:linear-gradient(135deg,{{ c1 }},{{ c2 }})" data-a="{{ c1 }}" data-b="{{ c2 }}" aria-label="{{ nome }}" title="{{ nome }}"></button>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% include "contratacao/mockups/" ~ d.mockup ~ ".html" %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ===== Grade "E ainda tem muito mais" ===== -->
+  <section class="lp-section alt">
+    <div class="lp-wrap">
+      <div class="lp-center" data-reveal>
+        <h2 class="lp-h2">{{ t.MAIS_RECURSOS_TITULO }}</h2>
+      </div>
+      <div class="lp-grid" data-reveal>
+        {% for r in t.MAIS_RECURSOS %}
+        <div class="lp-card"><div class="ico">{{ icon(r.icone, 24) }}</div><h4>{{ r.titulo }}</h4><p>{{ r.texto }}</p></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Calculadora de faltas (conta feita em static/js/landing.js) ===== -->
+  {% set tc = t.CALCULADORA %}
+  {% set pro = planos|selectattr('nome', 'equalto', 'Pro')|first %}
+  <section class="lp-section" id="calculadora">
+    <div class="lp-wrap">
+      <div class="calc" data-reveal data-reducao="{{ tc.reducao }}" data-preco="{{ pro.preco_mensal if pro else '' }}">
+        <div class="calc-entradas">
+          <span class="lp-eyebrow">{{ tc.etiqueta }}</span>
+          <h2 class="lp-h2" style="text-align:left;">{{ tc.titulo }}</h2>
+          <p class="lp-lead" style="margin-bottom:1.75rem;">{{ tc.texto }}</p>
+
+          <label class="calc-campo">
+            <span>{{ tc.atendimentos }} <output id="calcAtendOut">60</output></span>
+            <input type="range" id="calcAtend" min="5" max="300" step="5" value="60">
+          </label>
+          <label class="calc-campo">
+            <span>{{ tc.ticket }} <output id="calcTicketOut">R$ 70</output></span>
+            <input type="range" id="calcTicket" min="20" max="500" step="5" value="70">
+          </label>
+          <label class="calc-campo">
+            <span>{{ tc.faltas }} <output id="calcFaltasOut">10%</output></span>
+            <input type="range" id="calcFaltas" min="1" max="40" step="1" value="10">
+          </label>
+        </div>
+
+        <div class="calc-resultado" aria-live="polite">
+          <div class="calc-bloco perde">
+            <small>{{ tc.perde_titulo }}</small>
+            <strong id="calcPerde">R$ 1.806</strong>
+            <span id="calcPerdeQtd">26 horários vazios</span>
+          </div>
+          <div class="calc-bloco recupera">
+            <small>{{ tc.recupera_titulo }}</small>
+            <strong id="calcRecupera">R$ 542</strong>
+            {% if pro %}<span id="calcCompara">{{ tc.comparacao.replace('{preco}', pro.preco_mensal|brl) }}</span>{% endif %}
+          </div>
+          <p class="calc-premissa">{{ tc.premissa.replace('{reducao}', tc.reducao|string) }}</p>
+          <a href="#planos" class="btn btn-primary" style="width:100%;">{{ tc.botao }}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Planos (dados: tabela "planos", editável em /admin/planos) ===== -->
+  {% set tp = t.PLANOS %}
+  {% set rp = t.PLANO_RECURSOS %}
+  <section class="lp-section" id="planos">
+    <div class="lp-wrap">
+      <div class="lp-center" data-reveal>
+        <span class="lp-eyebrow">{{ tp.etiqueta }}</span>
+        <h2 class="lp-h2">{{ tp.titulo }}</h2>
+        <p class="lp-lead">{{ tp.texto }}</p>
+      </div>
+
+      <div class="billing-toggle-wrap">
+        <div class="billing-toggle">
+          <button type="button" class="active" id="btnMensal" onclick="setBilling('mensal')">{{ tp.mensal }}</button>
+          <button type="button" id="btnAnual" onclick="setBilling('anual')">{{ tp.anual }}</button>
+        </div>
+        <span class="discount-pill">{{ tp.desconto }}</span>
+      </div>
+
+      <div class="pricing-grid" data-reveal>
+        {% for p in planos %}
+          {% set is_featured = (p.nome|lower == 'pro' or p.nome|lower == 'profissional') %}
+          <div class="pricing-card {% if is_featured %}featured{% endif %}">
+            {% if is_featured %}<div class="featured-badge">{{ tp.mais_escolhido }}</div>{% endif %}
+            <div>
+              <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: .35rem;">{{ p.nome }}</h3>
+              <p style="color: var(--text-muted); font-size: .92rem; min-height: 44px;">{{ p.descricao or tp.descricao_padrao }}</p>
+
+              <div class="price-mensal">
+                <div class="price-amount"><small>R$</small>{{ p.preco_mensal|brl }}</div>
+                <div class="price-sub">{{ tp.por_mes }}</div>
+              </div>
+              <div class="price-anual" style="display: none;">
+                <div class="price-amount"><small>R$</small>{{ p.preco_anual|brl }}</div>
+                <div class="price-sub">{{ tp.por_ano.replace('{mensal}', (p.preco_anual / 12)|brl) }}</div>
+              </div>
+
+              {# (texto, incluído no plano?) — os rótulos ficam em textos/landing.py → PLANO_RECURSOS #}
+              {% set recursos_plano = [
+                (rp.agenda, true),
+                (rp.lucro, true),
+                (rp.usuarios|com_numero(p.max_usuarios), true),
+                (rp.servicos|com_numero(p.max_servicos) if p.max_servicos is not none else rp.servicos_ilimitados, true),
+                (rp.historico|com_numero(p.historico_meses), true),
+                (rp.fotos|com_numero(p.max_fotos) if p.max_fotos else rp.sem_fotos, p.max_fotos),
+                (rp.equipe, true),
+                (rp.espera_pacotes, true),
+                (rp.dados, true),
+                (rp.lembretes, p.lembretes),
+                (rp.gerente, p.permite_gerente),
+                (rp.google_agenda, p.sincronizacao_agenda),
+                (rp.relatorios_avancados, p.relatorios_avancados),
+                (rp.personalizacao, p.personalizacao_avancada),
+                (rp.exportacao, p.exportacao),
+                (rp.dominio, p.dominio_personalizado),
+              ] %}
+              <ul class="features-list">
+                {% for texto, incluso in recursos_plano %}
+                <li class="{% if not incluso %}disabled{% endif %}"><span class="check-icon">{{ "✓" if incluso else "✕" }}</span><span>{{ texto }}</span></li>
+                {% endfor %}
+              </ul>
+            </div>
+            <a href="/contratar/{{ p.id }}?periodicidade=MENSAL" id="cta-btn-{{ p.id }}" data-plano-id="{{ p.id }}" class="btn {% if is_featured %}btn-primary{% else %}btn-outline{% endif %}" style="width: 100%; padding: .95rem; font-size: 1rem;">
+              {{ tp.botao.replace('{plano}', p.nome) }}
+            </a>
+            <div class="plano-teste">{{ tp.teste }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Avaliações ===== -->
+  {% set ta = t.AVALIACOES %}
+  <section class="lp-section alt" id="avaliacoes">
+    <div class="lp-wrap">
+      <div class="lp-center" data-reveal>
+        <span class="lp-eyebrow">{{ ta.etiqueta }}</span>
+        <h2 class="lp-h2">{{ ta.titulo }}</h2>
+        {% if media_avaliacoes %}
+          <p class="lp-lead" style="display:flex; align-items:center; justify-content:center; gap:.75rem; flex-wrap:wrap;">
+            <span class="stars" style="font-size:1.5rem;"><span style="width: {{ (media_avaliacoes / 5 * 100)|round(1) }}%"></span></span>
+            <strong style="color:#111827;">{{ "%.1f"|format(media_avaliacoes)|replace('.', ',') }} de 5</strong>
+            · {{ total_avaliacoes }} avaliação{{ "ões" if total_avaliacoes != 1 else "" }}
+          </p>
+        {% else %}
+          <p class="lp-lead">{{ ta.texto_sem_media }}</p>
+        {% endif %}
+      </div>
+
+      <div class="rev-grid" data-reveal>
+        <div>
+          {% if avaliacoes %}
+            <div class="rev-list">
+              {% for a in avaliacoes %}
+                <article class="rev-card">
+                  <div style="display:flex; align-items:center; gap:.6rem;">
+                    <span class="stars"><span style="width: {{ (a.nota / 5 * 100)|round(1) }}%"></span></span>
+                    <strong>{{ "%.1f"|format(a.nota)|replace('.', ',') }}</strong>
+                  </div>
+                  <p>{{ a.comentario }}</p>
+                  <div class="rev-who">
+                    <div class="rev-av">{{ a.salao.nome[0]|upper }}</div>
+                    <div>
+                      <div style="font-weight:700; font-size:.92rem;">{{ a.salao.nome }}</div>
+                      <div style="font-size:.78rem; color:var(--text-muted);">
+                        {% if a.salao.cidade %}{{ a.salao.cidade }}{% if a.salao.estado %}/{{ a.salao.estado }}{% endif %} · {% endif %}{{ (a.atualizado_em or a.criado_em).strftime('%d/%m/%Y') if (a.atualizado_em or a.criado_em) else '' }}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="lp-card" style="text-align:center; padding:3rem;">
+              <div style="color:var(--brand);">{{ icon('star',34) }}</div>
+              <h4 style="margin-top:.5rem;">{{ ta.vazio_titulo }}</h4>
+              <p>{{ ta.vazio_texto }}</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="rev-form">
+          <h3 style="font-size:1.25rem; font-weight:800; margin-bottom:.35rem;">{{ ta.form_titulo }}</h3>
+          <p style="color:var(--text-muted); font-size:.88rem; margin-bottom:1.25rem;">{{ ta.form_texto }}</p>
+
+          {% if aval_msg %}<div class="alert alert-success">✓ {{ aval_msg }}</div>{% endif %}
+          {% if aval_erro %}<div class="alert alert-danger">⚠ {{ aval_erro }}</div>{% endif %}
+
+          {% if pode_avaliar %}
+          <form method="post" action="/contratar/avaliar" id="formAvaliacao" novalidate>{{ csrf_input() }}
+            <div class="form-group">
+              <label class="form-label" for="aval_nota">{{ ta.nota }}</label>
+              <div style="display:flex; align-items:center; gap:1rem;">
+                <div class="rate" id="rateBox">
+                  <div class="fill" id="rateFill"></div>
+                  <input type="range" id="aval_nota" min="0.5" max="5" step="0.5" value="5" aria-label="Nota de 0,5 a 5 estrelas">
+                </div>
+                <strong id="rateLabel" style="font-size:1.1rem; color:var(--text-muted);">—</strong>
+              </div>
+              <input type="hidden" name="nota" id="notaHidden" value="">
+              <small style="color:var(--text-muted);">{{ ta.nota_dica }}</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="aval_coment">{{ ta.comentario }}</label>
+              <textarea class="form-control" id="aval_coment" name="comentario" rows="5" maxlength="800" required minlength="10" placeholder="{{ ta.comentario_placeholder }}"></textarea>
+              <div style="text-align:right; font-size:.78rem; color:var(--text-muted);"><span id="comentCount">0</span>/800</div>
+            </div>
+
+            <div id="avalErroJs" class="alert alert-danger" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary">{{ ta.botao }}</button>
+          </form>
+          {% else %}
+          <div style="text-align:center; padding:1.5rem 0;">
+            <div style="width:52px;height:52px;margin:0 auto 1rem;border-radius:50%;background:var(--brand-light);color:var(--brand);display:flex;align-items:center;justify-content:center;">
+              {{ icon('lock', 24) }}
+            </div>
+            <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:1.25rem;">{{ ta.login_texto }}</p>
+            <a href="/minhaagenda/login" class="btn btn-primary" style="width:auto;">{{ ta.login_botao }}</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Perguntas frequentes ===== -->
+  <section class="lp-section">
+    <div class="lp-wrap" style="max-width: 1100px;">
+      <div class="lp-center" data-reveal>
+        <h2 class="lp-h2">{{ t.FAQ_TITULO }}</h2>
+      </div>
+      <div class="faq-grid" data-reveal>
+        {% for f in t.FAQ %}
+        <div class="faq-item">
+          <h3>{{ f.pergunta }}</h3>
+          <p>{{ f.resposta }}{% if f.link_url %} <a href="{{ f.link_url }}" style="color:var(--brand);">{{ f.link_texto }}</a>.{% endif %}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Chamada final ===== -->
+  <section style="padding: 0 0 5rem;">
+    <div class="lp-wrap">
+      <div class="lp-final" data-reveal>
+        <div>
+          <h2>{{ t.CTA_FINAL.titulo }}</h2>
+          <p style="opacity:.85; margin-top:.4rem;">{{ t.CTA_FINAL.texto }}</p>
+        </div>
+        <a href="#planos" class="btn" style="background:#fff; color:#312e81; padding:1rem 2rem; font-size:1rem;">{{ t.CTA_FINAL.botao }}</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="lp-footer">
+    <div class="lp-wrap">
+      <span>{{ t.RODAPE.copyright }}</span>
+      <span><a href="/termos">{{ t.RODAPE.termos }}</a> · <a href="/minhaagenda/login">{{ t.RODAPE.area_cliente }}</a></span>
+    </div>
+  </footer>
+</div>
+
+<script src="{{ asset('js/landing.js') }}"></script>
+{% endblock %}

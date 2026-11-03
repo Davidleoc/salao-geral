@@ -1,0 +1,216 @@
+{% extends "painel/painel_base.html" %}
+{% block title %}Relatórios & Métricas — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:700;">Relatórios & Métricas</h1>
+    <p style="color:var(--text-muted); font-size:0.95rem;">Análise de faturamento, serviços mais procurados e retenção de clientes.</p>
+  </div>
+  
+  <div style="display:flex; gap: 0.75rem; align-items:center;">
+    <!-- Filtro de Período -->
+    <form method="get" action="/minhaagenda/relatorios" style="display:flex; gap:0.5rem; align-items:center;">
+      <select name="meses_filtro" class="form-control" onchange="this.form.submit()" style="width:auto;">
+        <option value="1" {% if meses_filtro == 1 %}selected{% endif %}>Últimos 30 dias</option>
+        {% if max_meses_permitido >= 2 %}
+          <option value="2" {% if meses_filtro == 2 %}selected{% endif %}>Últimos 2 meses</option>
+        {% endif %}
+        {% if max_meses_permitido >= 6 %}
+          <option value="6" {% if meses_filtro == 6 %}selected{% endif %}>Últimos 6 meses (Plano Pro)</option>
+        {% endif %}
+        {% if max_meses_permitido >= 12 %}
+          <option value="12" {% if meses_filtro == 12 %}selected{% endif %}>Últimos 12 meses (Plano Premium)</option>
+        {% endif %}
+      </select>
+    </form>
+
+    <!-- Botões de Exportação CSV -->
+    {% if pode_exportar %}
+      <div style="display:flex; gap:0.5rem;">
+        <a href="/minhaagenda/relatorios/exportar?tipo=agendamentos" class="btn btn-outline btn-sm">
+          {{ icon('download', 16) }} Exportar Agendamentos (CSV)
+        </a>
+        <a href="/minhaagenda/relatorios/exportar?tipo=clientes" class="btn btn-outline btn-sm">
+          {{ icon('download', 16) }} Exportar Clientes (CSV)
+        </a>
+      </div>
+    {% else %}
+      <div title="Disponível exclusivamente no plano Premium" style="display:inline-block;">
+        <a href="/minhaagenda/assinatura" class="btn btn-sm btn-outline" style="opacity:0.65; border-style:dashed;">
+          {{ icon('lock', 16) }} Exportação CSV (Premium)
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- KPIs Financeiros -->
+<div class="kpi-grid">
+  <div class="kpi-card" style="border-left:4px solid var(--success);">
+    <div class="kpi-label">Faturamento Realizado</div>
+    <div class="kpi-value" style="color:var(--success);">R$ {{ fat_concluido|brl }}</div>
+    <div class="kpi-sub">{{ total_concluidos }} serviços concluídos{% if receita_pacotes %} + R$ {{ receita_pacotes|brl }} em pacotes vendidos{% endif %}</div>
+  </div>
+
+  <div class="kpi-card" style="border-left:4px solid var(--danger);">
+    <div class="kpi-label">Custos e comissões</div>
+    <div class="kpi-value" style="color:#dc2626;">R$ {{ (custo_concluido + comissoes)|brl }}</div>
+    <div class="kpi-sub">Custos R$ {{ custo_concluido|brl }} · comissões R$ {{ comissoes|brl }}</div>
+  </div>
+
+  <div class="kpi-card" style="border-left:4px solid var(--brand); background:linear-gradient(180deg,#faf9ff,#fff);">
+    <div class="kpi-label">Lucro do salão</div>
+    <div class="kpi-value" style="color:{{ 'var(--danger)' if lucro_salao < 0 else 'var(--brand-dark)' }};">R$ {{ lucro_salao|brl }}</div>
+    <div class="kpi-sub">Faturamento − custos − comissões · margem de {{ "%.0f"|format(margem_salao) }}%</div>
+  </div>
+
+  <div class="kpi-card" style="border-left:4px solid #0ea5e9;">
+    <div class="kpi-label">Ticket Médio</div>
+    <div class="kpi-value">R$ {{ ticket_medio|brl }}</div>
+    <div class="kpi-sub">Média por atendimento realizado</div>
+  </div>
+
+  <div class="kpi-card" style="border-left:4px solid var(--warning);">
+    <div class="kpi-label">Faturamento Previsto</div>
+    <div class="kpi-value">R$ {{ fat_previsto|brl }}</div>
+    <div class="kpi-sub">Horários marcados futuros</div>
+  </div>
+
+  <div class="kpi-card" style="border-left:4px solid #9ca3af;">
+    <div class="kpi-label">Cancelados / Perdas</div>
+    <div class="kpi-value" style="color:var(--danger);">{{ total_cancelados }}</div>
+    <div class="kpi-sub">R$ {{ fat_cancelado|brl }} em horários cancelados</div>
+  </div>
+</div>
+
+<!-- Lucro por Serviço -->
+<div class="card" style="margin-top:1rem;">
+  <div class="card-header" style="flex-wrap:wrap; gap:.5rem;">
+    <h2 class="card-title">Lucro por Serviço</h2>
+    <span style="font-size:0.8rem; color:var(--text-muted);">Lucro = preço do serviço − custo de prestar o serviço (atendimentos CONCLUÍDOS)</span>
+  </div>
+
+  {% if desempenho_servicos %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Serviço</th>
+            <th style="text-align:center;">Atendimentos</th>
+            <th style="text-align:right;">Faturado</th>
+            <th style="text-align:right;">Custo</th>
+            <th style="text-align:right;">Lucro</th>
+            <th style="text-align:right;">Margem</th>
+            <th style="width:22%;">Composição</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in desempenho_servicos %}
+          <tr>
+            <td style="font-weight:600; color:var(--text);">{{ s.nome }}</td>
+            <td style="text-align:center;"><span class="badge badge-neutral">{{ s.qtd }}</span></td>
+            <td style="text-align:right;">R$ {{ s.faturado|brl }}</td>
+            <td style="text-align:right; color:#dc2626;">{{ ("R$ " ~ s.custo|brl) if s.custo else "—" }}</td>
+            <td style="text-align:right; font-weight:800; color:{{ 'var(--danger)' if s.lucro < 0 else '#15803d' }};">R$ {{ s.lucro|brl }}</td>
+            <td style="text-align:right;">{{ "%.0f"|format(s.margem) }}%</td>
+            <td>
+              {% set largura = (s.faturado / maior_faturamento * 100) if maior_faturamento else 0 %}
+              <div style="height:12px; border-radius:4px; background:var(--surface-2); overflow:hidden; display:flex;" title="Custo R$ {{ s.custo|brl }} · Lucro R$ {{ s.lucro|brl }}">
+                {% if s.faturado %}
+                <div style="width:{{ [largura * s.custo / s.faturado, largura]|min }}%; background:#fca5a5;"></div>
+                <div style="width:{{ [[largura * s.lucro / s.faturado, 0]|max, largura]|min }}%; background:#4ade80;"></div>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="border-top:2px solid var(--border);">
+            <td style="padding:.9rem 1rem; font-weight:800;">Total</td>
+            <td style="text-align:center; font-weight:700;">{{ total_concluidos }}</td>
+            <td style="text-align:right; font-weight:700; padding:.9rem 1rem;">R$ {{ fat_concluido|brl }}</td>
+            <td style="text-align:right; font-weight:700; color:#dc2626; padding:.9rem 1rem;">R$ {{ custo_concluido|brl }}</td>
+            <td style="text-align:right; font-weight:800; color:{{ 'var(--danger)' if lucro_concluido < 0 else '#15803d' }}; padding:.9rem 1rem;">R$ {{ lucro_concluido|brl }}</td>
+            <td style="text-align:right; font-weight:700; padding:.9rem 1rem;">{{ "%.0f"|format(margem_lucro) }}%</td>
+            <td style="font-size:.75rem; color:var(--text-muted); padding:.9rem 1rem;">
+              <span style="display:inline-block;width:10px;height:10px;background:#fca5a5;border-radius:2px;"></span> custo
+              <span style="display:inline-block;width:10px;height:10px;background:#4ade80;border-radius:2px;margin-left:.5rem;"></span> lucro
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% if custo_concluido == 0 %}
+      <div class="alert alert-warning" style="margin:1rem 0 0;">
+        Nenhum custo cadastrado ainda. Informe o custo de cada serviço em <a href="/minhaagenda/servicos" style="color:inherit; font-weight:700;">Serviços</a> para ver o lucro real.
+      </div>
+    {% endif %}
+  {% else %}
+    <div style="padding:2.5rem 1rem; text-align:center; color:var(--text-muted);">
+      Nenhum atendimento concluído no período filtrado.
+    </div>
+  {% endif %}
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr; gap:2rem; margin-top:2rem;">
+
+  <!-- Clientes mais Recorrentes -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Top 10 Clientes Mais Fiéis</h2>
+      <span style="font-size:0.8rem; color:var(--text-muted);">Por número de visitas</span>
+    </div>
+
+    {% if clientes_fieis %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th style="text-align:center;">Visitas</th>
+              <th style="text-align:right;">Gasto Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for nome_cli, tel_cli, total_visitas, gasto_total in clientes_fieis %}
+            <tr>
+              <td>
+                <div style="font-weight:600;">{{ nome_cli }}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">{{ tel_cli }}</div>
+              </td>
+              <td style="text-align:center;">
+                <span class="badge badge-purple">{{ total_visitas }}</span>
+              </td>
+              <td style="text-align:right; font-weight:700;">
+                R$ {{ (gasto_total or 0)|brl }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding:2.5rem 1rem; text-align:center; color:var(--text-muted);">
+        Nenhum histórico de clientes concluídos neste período.
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<div class="card" style="margin-top:2rem; background:var(--surface-2); border:1px dashed var(--border);">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <h3 style="font-size:1rem; font-weight:700; margin-bottom:0.25rem;">Histórico permitido pelo seu plano</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">
+        Seu plano atual permite consultar relatórios de até <strong>{{ max_meses_permitido }} meses</strong> atrás.
+      </p>
+    </div>
+    {% if max_meses_permitido < 12 %}
+      <a href="/minhaagenda/assinatura" class="btn btn-sm btn-outline">Aumentar Histórico →</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

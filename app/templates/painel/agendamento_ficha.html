@@ -1,0 +1,150 @@
+{# Ficha do agendamento — routes/agenda.py (status, cancelamento, pacote, link de avaliação) #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Agendamento #{{ agendamento.id }} — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+{% set a = agendamento %}
+{% set cancelado = 'CANCELADO' in a.status.value %}
+<div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom: 1.75rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:800;">Agendamento</h1>
+    <p style="color:var(--text-muted);">{{ a.data.strftime('%d/%m/%Y') }} · {{ a.status|status_label }}</p>
+  </div>
+  <a href="/minhaagenda/agenda?data={{ a.data }}" class="btn-back">← Voltar para a agenda</a>
+</div>
+
+<div style="display:grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 1.5rem; align-items:start;">
+  <div>
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div style="display:flex; justify-content:space-between; gap:1rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; margin-bottom:1.25rem;">
+        <div>
+          <div class="kpi-label">Serviço</div>
+          <div style="font-size:1.4rem; font-weight:800;">{{ a.servico.nome }}</div>
+          <div style="color:var(--text-muted);">{{ a.servico.duracao_minutos }} min</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="kpi-label">Horário</div>
+          <div style="font-size:1.4rem; font-weight:800; color:var(--brand);">{{ a.hora_inicio.strftime('%H:%M') }}</div>
+          <div style="color:var(--text-muted);">até {{ a.hora_fim.strftime('%H:%M') }}</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1.25rem;">
+        <div>
+          <div class="kpi-label">Cliente</div>
+          {% if pode('clientes.ver') %}<a href="/minhaagenda/clientes/{{ a.cliente_id }}" style="font-weight:700; color:var(--text);">{{ a.cliente.nome }}</a>{% else %}<b>{{ a.cliente.nome }}</b>{% endif %}
+          <div style="font-size:.85rem; color:var(--text-muted);">{{ a.cliente.telefone }} · <a href="{{ a.cliente.telefone|link_whatsapp }}" target="_blank" rel="noopener" style="color:#16a34a;">WhatsApp</a></div>
+        </div>
+        <div>
+          <div class="kpi-label">{{ 'Quem atendeu' if a.status.value == 'CONCLUIDO' else 'Quem vai atender' }}</div>
+          {% if a.profissional %}
+            <span style="display:inline-flex; align-items:center; gap:.5rem;">
+              {% if a.profissional.foto %}<img src="{{ a.profissional.foto }}" alt="" class="avatar" style="width:30px;height:30px;">{% else %}<span class="avatar" style="width:30px;height:30px;font-size:.8rem;">{{ a.profissional.nome[0]|upper }}</span>{% endif %}
+              <b>{{ a.profissional.nome }}</b>
+            </span>
+          {% else %}<span style="color:var(--text-muted);">Sem profissional definido</span>{% endif %}
+          {% if equipe and not cancelado %}
+          <form method="post" action="/minhaagenda/agenda/{{ a.id }}/profissional" style="display:flex; gap:.35rem; margin-top:.5rem;">{{ csrf_input() }}
+            <select name="profissional_id" class="form-control" style="font-size:.85rem; padding:.35rem .5rem;" aria-label="Alterar profissional">
+              <option value="">Sem profissional definido</option>
+              {% for p in equipe %}<option value="{{ p.id }}" {% if p.id == a.profissional_id %}selected{% endif %}>{{ p.nome }}{% if p.especialidade %} — {{ p.especialidade }}{% endif %}</option>{% endfor %}
+            </select>
+            <button class="btn btn-sm btn-outline">Trocar</button>
+          </form>
+          {% endif %}
+        </div>
+        <div>
+          <div class="kpi-label">Valor</div>
+          <div style="font-size:1.15rem; font-weight:700;">R$ {{ a.valor|brl }}</div>
+          <span class="badge badge-neutral">{{ a.forma_pagamento.value if a.forma_pagamento else 'A combinar' }}</span>
+          {% if a.pacote_cliente_id %}<span class="badge badge-purple">Pago com pacote</span>{% endif %}
+        </div>
+      </div>
+
+      {% if a.observacoes %}
+      <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed var(--border);">
+        <div class="kpi-label">Observação do cliente</div>
+        <div style="background:var(--surface-2); padding:.8rem 1rem; border-radius:var(--radius-sm); font-style:italic;">“{{ a.observacoes }}”</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if not cancelado %}
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3 class="card-title" style="margin-bottom:1rem;">Atualizar status</h3>
+      <form method="post" action="/minhaagenda/agenda/{{ a.id }}/status">{{ csrf_input() }}
+        <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center;">
+          <select name="novo_status" id="novo_status" class="form-control" style="max-width:260px;">
+            <option value="AGENDADO" {% if a.status.value == 'AGENDADO' %}selected{% endif %}>Agendado</option>
+            <option value="CONFIRMADO" {% if a.status.value == 'CONFIRMADO' %}selected{% endif %}>Confirmado</option>
+            <option value="CONCLUIDO" {% if a.status.value == 'CONCLUIDO' %}selected{% endif %}>Concluído (conta no faturamento)</option>
+            <option value="NAO_COMPARECEU" {% if a.status.value == 'NAO_COMPARECEU' %}selected{% endif %}>Não compareceu</option>
+          </select>
+          <button type="submit" class="btn btn-primary" style="width:auto;">Salvar</button>
+        </div>
+        {% if pacotes_validos %}
+        <div style="margin-top:1rem; padding:.9rem 1rem; background:var(--brand-light); border-radius:10px;">
+          <label class="form-label" for="usar_pacote" style="color:var(--brand-dark);">Ao concluir, descontar de um pacote do cliente?</label>
+          <select name="usar_pacote" id="usar_pacote" class="form-control">
+            <option value="">Não — o cliente paga este atendimento</option>
+            {% for pc in pacotes_validos %}<option value="{{ pc.id }}">{{ pc.pacote.nome }} — restam {{ pc.sessoes_restantes }} sessão(ões), válido até {{ pc.validade.strftime('%d/%m/%Y') }}</option>{% endfor %}
+          </select>
+        </div>
+        {% endif %}
+      </form>
+    </div>
+    {% endif %}
+
+    {% if a.status.value == 'CONCLUIDO' %}
+    <div class="card">
+      <h3 class="card-title" style="margin-bottom:.5rem;">Avaliação do cliente</h3>
+      {% if avaliacao and avaliacao.respondido_em %}
+        <div style="font-size:1.3rem; color:#f59e0b;">{{ '★' * avaliacao.nota }}<span style="color:#e5e7eb;">{{ '★' * (5 - avaliacao.nota) }}</span></div>
+        {% if avaliacao.comentario %}<p style="margin-top:.4rem;">“{{ avaliacao.comentario }}”</p>{% endif %}
+      {% else %}
+        <p style="color:var(--text-muted); font-size:.9rem; margin-bottom:.8rem;">
+          {% if avaliacao %}Convite enviado — aguardando resposta.{% else %}Peça para o cliente avaliar o atendimento.{% endif %}
+          Gere um link e mande pelo WhatsApp:
+        </p>
+        {% if link_avaliacao %}
+          <div style="display:flex; gap:.4rem;">
+            <input class="form-control" id="link_av" value="{{ url_base }}{{ link_avaliacao }}" readonly style="font-size:.82rem;">
+            <button type="button" class="btn btn-sm btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('link_av').value); this.textContent='Copiado!';">Copiar</button>
+          </div>
+        {% else %}
+          <form method="post" action="/minhaagenda/agenda/{{ a.id }}/link-avaliacao">{{ csrf_input() }}<button class="btn btn-sm btn-outline">Gerar link de avaliação</button></form>
+        {% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div>
+    {% if cancelado %}
+      <div class="card" style="border-color:var(--danger); background:var(--danger-light);">
+        <h3 style="color:#991b1b; font-weight:800; margin-bottom:.5rem;">Agendamento cancelado</h3>
+        <p style="font-size:.9rem; color:#7f1d1d;">Em {{ a.cancelado_em.strftime('%d/%m/%Y %H:%M') if a.cancelado_em else '--' }}</p>
+        <div style="background:rgba(255,255,255,.55); padding:.8rem; border-radius:8px; margin-top:.75rem;">
+          <b style="color:#991b1b; font-size:.78rem; text-transform:uppercase;">Motivo</b><br>
+          <span style="color:#7f1d1d;">{{ a.motivo_cancelamento or 'Não informado' }}</span>
+        </div>
+      </div>
+    {% else %}
+      <div class="card">
+        <h3 class="card-title" style="color:var(--danger); margin-bottom:.4rem;">Cancelar</h3>
+        <p style="font-size:.85rem; color:var(--text-muted); margin-bottom:1rem;">Libera o horário na hora. Se houver alguém na lista de espera deste dia, a primeira pessoa é avisada.</p>
+        <form method="post" action="/minhaagenda/agenda/{{ a.id }}/cancelar">{{ csrf_input() }}
+          <div class="form-group">
+            <label class="form-label" for="motivo">Motivo (obrigatório)</label>
+            <textarea id="motivo" name="motivo_cancelamento" class="form-control" rows="3" required placeholder="Ex: cliente pediu para desmarcar"></textarea>
+          </div>
+          <button type="submit" class="btn btn-danger" style="width:100%;" onclick="return confirm('Cancelar este agendamento? O horário fica livre.')">Cancelar agendamento</button>
+        </form>
+      </div>
+    {% endif %}
+    <div style="font-size:.75rem; color:var(--text-light); text-align:center; margin-top:1.25rem;">
+      Criado em {{ a.criado_em.strftime('%d/%m/%Y %H:%M') if a.criado_em else '--' }}
+    </div>
+  </div>
+</div>
+{% endblock %}

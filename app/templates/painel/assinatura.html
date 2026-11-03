@@ -1,0 +1,162 @@
+{# Assinatura e dados da conta — routes/conta.py. Só o dono vê. Funciona mesmo com o salão bloqueado. #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Assinatura e dados — {{ salao.nome }}{% endblock %}
+
+{% set a = assinatura %}
+{% set st = a.status.value if a else '' %}
+{% set ROTULO = {'TESTE':('Teste grátis','badge-info'), 'ATIVO':('Ativa','badge-success'), 'PAGO':('Ativa','badge-success'),
+  'AGUARDANDO_PAGAMENTO':('Aguardando pagamento','badge-warning'), 'EM_ATRASO':('Em atraso','badge-danger'),
+  'SUSPENSO':('Suspensa','badge-danger'), 'CANCELADO':('Cancelada','badge-neutral')} %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom: 1.75rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:800;">Assinatura e dados</h1>
+    <p style="color:var(--text-muted);">Plano, pagamento, seus dados e a conta.</p>
+  </div>
+  <a href="/contratar#planos" target="_blank" rel="noopener" class="btn btn-outline">Comparar planos ↗</a>
+</div>
+
+<div style="display:grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 1.5rem; align-items:start;" class="grid-conta">
+  <div>
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:1.25rem; margin-bottom:1.25rem;">
+        <div>
+          {% if a %}<span class="badge {{ ROTULO.get(st, ('', 'badge-neutral'))[1] }}" style="margin-bottom:.4rem;">{{ ROTULO.get(st, (st,))[0] }}</span>{% endif %}
+          <h2 style="font-size:1.5rem; font-weight:800;">Plano {{ plano.nome if plano else '—' }}</h2>
+          {% if plano and plano.descricao %}<div style="color:var(--text-muted); font-size:.9rem;">{{ plano.descricao }}</div>{% endif %}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:1.6rem; font-weight:800; color:var(--brand);">R$ {{ (a.valor_cobrado if a else 0)|brl }}</div>
+          <div style="font-size:.85rem; color:var(--text-muted);">{{ 'por ano' if a and a.periodicidade.value == 'ANUAL' else 'por mês' }}</div>
+        </div>
+      </div>
+
+      <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom:0;">
+        <div style="background:var(--surface-2); padding:1rem; border-radius:var(--radius-sm);">
+          <div class="kpi-label">Início</div>
+          <b>{{ a.data_inicio.strftime('%d/%m/%Y') if a and a.data_inicio else 'Ainda não começou' }}</b>
+        </div>
+        <div style="background:var(--surface-2); padding:1rem; border-radius:var(--radius-sm);">
+          <div class="kpi-label">{{ 'Fim do teste' if st == 'TESTE' else 'Vencimento' }}</div>
+          <b style="color:var(--brand);">{{ a.data_fim.strftime('%d/%m/%Y') if a and a.data_fim else '—' }}</b>
+        </div>
+        <div style="background:var(--surface-2); padding:1rem; border-radius:var(--radius-sm);">
+          <div class="kpi-label">CPF/CNPJ</div>
+          <b>{{ documento_formatado or 'Não informado' }}</b>
+        </div>
+      </div>
+    </div>
+
+    {% if pix %}
+    <div class="card" style="margin-bottom:1.5rem; border-color:var(--brand);">
+      <h3 class="card-title" style="margin-bottom:.4rem;">Pagar com Pix</h3>
+      <p style="font-size:.9rem; color:var(--text-muted); margin-bottom:.9rem;">
+        No app do seu banco, escolha <b>Pix copia e cola</b> e cole o código abaixo. Assim que confirmarmos, o vencimento avança automaticamente
+        {% if st == 'TESTE' %}e o teste vira assinatura{% endif %}.
+      </p>
+      <div style="display:flex; gap:.5rem;">
+        <input class="form-control" id="pix_codigo" value="{{ pix }}" readonly style="font-family:var(--mono); font-size:.78rem;">
+        <button type="button" class="btn btn-primary" style="width:auto;" onclick="navigator.clipboard.writeText(document.getElementById('pix_codigo').value); this.textContent='Copiado!';">Copiar</button>
+      </div>
+    </div>
+    {% elif a and st in ('AGUARDANDO_PAGAMENTO', 'EM_ATRASO', 'SUSPENSO') %}
+    <div class="alert alert-warning" style="margin-bottom:1.5rem;">Os dados do Pix foram enviados para {{ salao.email_principal }}. Se não encontrar, fale com o suporte.</div>
+    {% endif %}
+
+    {% if pagamentos %}
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3 class="card-title" style="margin-bottom:1rem;">Pagamentos</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Pago em</th><th>Período</th><th style="text-align:right;">Valor</th></tr></thead>
+        <tbody>
+          {% for p in pagamentos %}
+          <tr><td>{{ p.pago_em.strftime('%d/%m/%Y') if p.pago_em else '—' }}</td>
+              <td>{{ p.periodo_inicio.strftime('%d/%m/%Y') }} a {{ p.periodo_fim.strftime('%d/%m/%Y') }}</td>
+              <td style="text-align:right;">R$ {{ p.valor|brl }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+    {% endif %}
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3 class="card-title" style="margin-bottom:.4rem; display:flex; align-items:center; gap:.5rem;"><span style="color:var(--brand);">{{ icon('download', 18) }}</span> Baixar meus dados</h3>
+      <p style="font-size:.9rem; color:var(--text-muted); margin-bottom:1rem;">
+        Uma cópia completa — clientes, agendamentos, serviços, equipe, pacotes e avaliações — em um arquivo .zip
+        com <b>JSON</b> (para levar a outro sistema) e <b>planilhas CSV</b> (abrem no Excel). Disponível em todos os planos.
+      </p>
+      <a href="/minhaagenda/assinatura/meus-dados.zip" class="btn btn-outline">Baixar cópia dos dados (.zip)</a>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3 class="card-title" style="margin-bottom:.4rem;">CPF ou CNPJ de quem contrata</h3>
+      <p style="font-size:.88rem; color:var(--text-muted); margin-bottom:.9rem;">Usado só na cobrança e nos recibos.</p>
+      <form method="post" action="/minhaagenda/assinatura/documento" style="display:flex; gap:.5rem; flex-wrap:wrap;">{{ csrf_input() }}
+        <input class="form-control" name="documento" value="{{ documento_formatado }}" placeholder="000.000.000-00 ou 00.000.000/0000-00" inputmode="numeric" maxlength="18" required style="max-width:300px;">
+        <button class="btn btn-outline" style="width:auto;">Salvar</button>
+      </form>
+    </div>
+
+    {% if not salao.encerrado_em %}
+    <details class="card" style="border-color:#fecaca;">
+      <summary style="cursor:pointer; font-weight:700; color:var(--danger);">Encerrar conta</summary>
+      <div style="margin-top:1rem; font-size:.9rem; color:var(--text-muted); line-height:1.6;">
+        <p>A assinatura é cancelada e sua página de agendamento sai do ar na hora. Os dados ficam guardados por
+          <b>{{ prazo_exclusao }} dias</b> (se mudar de ideia, é só falar com a gente) e depois os dados pessoais de clientes e
+          da equipe são <b>apagados definitivamente</b>. Ficam apenas valores financeiros sem identificação, pelo prazo exigido em lei.</p>
+        <p style="margin-top:.5rem;">Recomendamos <a href="/minhaagenda/assinatura/meus-dados.zip">baixar seus dados</a> antes.</p>
+      </div>
+      <form method="post" action="/minhaagenda/assinatura/encerrar" style="margin-top:1rem;" onsubmit="return confirm('Encerrar a conta do {{ salao.nome|e }}?');">{{ csrf_input() }}
+        <div class="form-group"><label class="form-label" for="enc_motivo">Por que está saindo? (opcional)</label>
+          <textarea id="enc_motivo" name="motivo" class="form-control" rows="2" maxlength="300"></textarea></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div class="form-group"><label class="form-label" for="enc_senha">Sua senha</label>
+            <input type="password" id="enc_senha" name="senha" class="form-control" required autocomplete="current-password"></div>
+          <div class="form-group"><label class="form-label" for="enc_conf">Digite ENCERRAR</label>
+            <input id="enc_conf" name="confirmacao" class="form-control" required autocomplete="off" pattern="[Ee][Nn][Cc][Ee][Rr][Rr][Aa][Rr]"></div>
+        </div>
+        <button class="btn btn-danger" style="width:auto;">Encerrar minha conta</button>
+      </form>
+    </details>
+    {% else %}
+    <div class="card" style="border-color:var(--danger); background:var(--danger-light);">
+      <b style="color:#991b1b;">Conta encerrada em {{ salao.encerrado_em.strftime('%d/%m/%Y') }}.</b>
+      <p style="color:#7f1d1d; font-size:.9rem; margin-top:.3rem;">
+        {% if salao.anonimizado_em %}Os dados pessoais já foram apagados.{% else %}Os dados serão apagados em {{ salao.exclusao_prevista_em.strftime('%d/%m/%Y') }}. Para desfazer, responda o e-mail de encerramento.{% endif %}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div>
+    {% if plano %}
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3 class="card-title" style="margin-bottom:.9rem;">Seu plano inclui</h3>
+      <ul style="list-style:none; display:grid; gap:.5rem; font-size:.9rem;">
+        <li>Até <b>{{ plano.max_usuarios }}</b> profissionais</li>
+        <li>{{ ('Até <b>' ~ plano.max_servicos ~ '</b> serviços')|safe if plano.max_servicos is not none else 'Serviços ilimitados' }}</li>
+        <li><b>{{ plano.historico_meses }}</b> meses de histórico</li>
+        <li style="color:{{ 'inherit' if plano.lembretes else 'var(--text-light)' }};">{{ 'Com' if plano.lembretes else 'Sem' }} lembretes por e-mail</li>
+        <li style="color:{{ 'inherit' if plano.permite_gerente else 'var(--text-light)' }};">{{ 'Com' if plano.permite_gerente else 'Sem' }} função de gerente</li>
+        <li style="color:{{ 'inherit' if plano.sincronizacao_agenda else 'var(--text-light)' }};">{{ 'Com' if plano.sincronizacao_agenda else 'Sem' }} Google Agenda</li>
+        <li style="color:{{ 'inherit' if plano.exportacao else 'var(--text-light)' }};">{{ 'Com' if plano.exportacao else 'Sem' }} CSV para o contador</li>
+      </ul>
+    </div>
+    {% endif %}
+
+    <details class="card" style="font-size:.85rem;">
+      <summary style="cursor:pointer; color:var(--text-muted); font-weight:600;">Acessos do suporte</summary>
+      <p style="color:var(--text-muted); margin:.6rem 0;">Quando nossa equipe abre os dados do seu salão para ajudar, fica registrado aqui (últimos 90 dias).</p>
+      {% if acessos_suporte %}
+        <ul style="list-style:none; display:grid; gap:.35rem;">
+          {% for l in acessos_suporte %}<li>{{ l.criado_em.strftime('%d/%m/%Y %H:%M') }} — {{ l.descricao or 'Consulta do suporte' }}</li>{% endfor %}
+        </ul>
+      {% else %}
+        <p style="color:var(--text-light);">Nenhum acesso no período.</p>
+      {% endif %}
+    </details>
+  </div>
+</div>
+<style>@media (max-width: 860px){ .grid-conta{ grid-template-columns: 1fr !important; } }</style>
+{% endblock %}

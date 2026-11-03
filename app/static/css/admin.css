@@ -1,0 +1,183 @@
+/* Tema do painel administrativo do SaaS (/admin)
+   Usado em: app/templates/admin/admin_base.html
+   (extraído do template para facilitar a manutenção) */
+
+/* Tema Administrativo - Dark & Roxo */
+:root {
+  --admin-bg-dark: #0f0e1a;
+  --admin-sidebar-bg: #151328;
+  --admin-topbar-bg: #1b1834;
+  --admin-border: #29254c;
+  --admin-purple: #8b5cf6;
+  --admin-purple-dark: #6d28d9;
+  --admin-purple-light: #ddd6fe;
+  --admin-text-muted: #9490b8;
+}
+
+.admin-app-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: var(--topbar-h) 1fr;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.admin-topbar {
+  grid-column: 1 / -1;
+  background: var(--admin-topbar-bg);
+  border-bottom: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.admin-brand-badge {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.4);
+}
+
+.admin-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.admin-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+}
+
+.admin-avatar {
+  width: 36px;
+  height: 36px;
+  background: #7c3aed;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+}
+
+.admin-sidebar {
+  background: var(--admin-sidebar-bg);
+  border-right: 1px solid var(--admin-border);
+  padding: 1.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  position: sticky;
+  top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  overflow-y: auto;
+}
+
+.admin-sidebar-section {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--admin-text-muted);
+  padding: 1.1rem 0.75rem 0.45rem;
+}
+
+.admin-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  color: #cbd5e1;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition);
+}
+
+.admin-sidebar-item:hover {
+  background: rgba(139, 92, 246, 0.15);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.admin-sidebar-item.active {
+  background: #7c3aed;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+}
+
+.admin-sidebar-item .icon {
+  font-size: 1.1rem;
+  width: 22px;
+  text-align: center;
+}
+
+.admin-main-content {
+  padding: 2.25rem 2.75rem;
+  overflow-y: auto;
+  background: #f8fafc;
+}
+
+.admin-divider {
+  border: none;
+  border-top: 1px solid var(--admin-border);
+  margin: 1rem 0;
+}
+
+.btn-logout {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.btn-logout:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .admin-app-layout {
+    grid-template-columns: 1fr;
+  }
+  .admin-sidebar {
+    display: none;
+  }
+  .admin-main-content {
+    padding: 1.25rem;
+  }
+}

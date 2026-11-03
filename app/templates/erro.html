@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} — MeuAgendamento{% endblock %}
+
+{% block body %}
+<div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem 1rem; background:var(--bg);">
+  <div class="card" style="max-width:480px; width:100%; text-align:center; padding:2.5rem 2rem;">
+    <div style="width:56px; height:56px; margin:0 auto 1rem; border-radius:50%; background:var(--brand-light); color:var(--brand); display:flex; align-items:center; justify-content:center;">
+      {{ icon('shield', 26) }}
+    </div>
+    <h1 style="font-size:1.4rem; font-weight:800; margin-bottom:.5rem;">{{ titulo }}</h1>
+    <p style="color:var(--text-muted); margin-bottom:1.5rem;">{{ mensagem }}</p>
+    <a href="javascript:history.length > 1 ? history.back() : location.assign('/')" class="btn-back">← Voltar</a>
+  </div>
+</div>
+{% endblock %}

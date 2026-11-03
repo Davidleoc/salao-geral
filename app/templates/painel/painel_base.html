@@ -1,0 +1,90 @@
+{#
+  Layout do painel do salão (/minhaagenda/...).
+  - O menu mostra só o que a função da pessoa permite: pode('...') → app/permissoes.py
+  - Sininho/balões: static/js/notificacoes.js · faixa da assinatura: aviso_assinatura() em templates_compat.py
+  Toda tela do painel precisa receber "usuario" e "salao" no contexto.
+#}
+{% extends "base.html" %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-painel.svg" /><link rel="apple-touch-icon" href="/static/img/fav-painel.svg" />{% endblock %}
+
+{% block body %}
+{% macro item(url, chave, icone, texto) %}
+  <a href="{{ url }}" class="sidebar-item {% if active_page == chave %}active{% endif %}"><span class="icon">{{ icon(icone) }}</span> {{ texto }}</a>
+{% endmacro %}
+<div class="app-layout">
+
+  <header class="topbar">
+    <a href="/minhaagenda/dashboard" class="topbar-brand">
+      {% if salao.logo %}
+        <img src="{{ salao.logo }}" alt="Logo" style="height: 32px; vertical-align: middle; margin-right: 8px;">
+      {% else %}
+        <span style="vertical-align: middle; color: var(--brand);">{{ icon('scissors', 22) }}</span>
+      {% endif %}
+      {{ salao.nome }}
+    </a>
+
+    <div class="topbar-right">
+      <div class="notif" id="notif" data-ultimo-id="0">
+        <button type="button" class="notif-botao" aria-label="Notificações" title="Notificações">
+          {{ icon('mail', 18) }}<span class="notif-contador" hidden>0</span>
+        </button>
+        <div class="notif-painel" hidden>
+          <div class="notif-cab">Notificações</div>
+          <div class="notif-lista"><div class="notif-vazio">Carregando…</div></div>
+        </div>
+      </div>
+      <a href="/minhaagenda/perfil" class="user-badge" style="text-decoration:none;" title="Meu perfil">
+        {% if usuario.foto %}<img src="{{ usuario.foto }}" alt="" class="avatar" style="width:36px;height:36px;">
+        {% else %}<div class="user-avatar">{{ usuario.nome[0] | upper }}</div>{% endif %}
+        <span>{{ usuario.nome }} <span class="papel-tag">{{ rotulo_papel(usuario.role) }}</span></span>
+      </a>
+      <form action="/minhaagenda/logout" method="post" style="display:inline;">{{ csrf_input() }}
+        <button type="submit" class="btn btn-sm btn-outline">Sair</button>
+      </form>
+    </div>
+  </header>
+
+  <nav class="sidebar" id="appSidebar">
+    {% if bloqueado %}
+    <div class="sidebar-section">Conta</div>
+    {{ item('/minhaagenda/conta-bloqueada', 'bloqueada', 'lock', 'Situação da conta') }}
+    {% if pode('assinatura.gerenciar') %}{{ item('/minhaagenda/assinatura', 'assinatura', 'card', 'Assinatura e dados') }}{% endif %}
+    {% else %}
+    <div class="sidebar-section">Menu principal</div>
+    {{ item('/minhaagenda/dashboard', 'dashboard', 'dashboard', 'Dashboard') }}
+    {{ item('/minhaagenda/agenda', 'agenda', 'calendar', 'Agenda' if pode('agenda.todos') else 'Minha agenda') }}
+    {% if pode('clientes.ver') %}{{ item('/minhaagenda/clientes', 'clientes', 'users', 'Clientes') }}{% endif %}
+    {% if pode('servicos.editar') %}{{ item('/minhaagenda/servicos', 'servicos', 'scissors', 'Serviços') }}{% endif %}
+    {% if pode('pacotes.gerenciar') %}{{ item('/minhaagenda/pacotes', 'pacotes', 'card', 'Pacotes e assinaturas') }}{% endif %}
+    {% if pode('lista_espera.ver') %}{{ item('/minhaagenda/lista-espera', 'lista_espera', 'clock', 'Lista de espera') }}{% endif %}
+
+    <div class="divider"></div>
+    <div class="sidebar-section">Gestão</div>
+    {% if pode('relatorios.ver') %}{{ item('/minhaagenda/relatorios', 'relatorios', 'trending', 'Relatórios') }}{% endif %}
+    {% if pode('comissoes.gerenciar') %}{{ item('/minhaagenda/comissoes', 'comissoes', 'coin', 'Comissões') }}{% endif %}
+    {{ item('/minhaagenda/meus-ganhos', 'meus_ganhos', 'chart', 'Meus ganhos') }}
+    {% if pode('avaliacoes.ver') %}{{ item('/minhaagenda/avaliacoes', 'avaliacoes', 'star', 'Avaliações dos clientes') }}{% endif %}
+    {% if pode('equipe.ver') %}{{ item('/minhaagenda/equipe', 'equipe', 'users', 'Equipe') }}{% endif %}
+
+    <div class="divider"></div>
+    <div class="sidebar-section">Conta</div>
+    {{ item('/minhaagenda/perfil', 'perfil', 'settings', 'Meu perfil') }}
+    {% if pode('configuracoes.editar') %}{{ item('/minhaagenda/configuracoes', 'configuracoes', 'store', 'Configurações do salão') }}{% endif %}
+    {% if pode('assinatura.gerenciar') %}{{ item('/minhaagenda/assinatura', 'assinatura', 'card', 'Assinatura e dados') }}{% endif %}
+    {% endif %}
+  </nav>
+
+  <main class="main-content">
+    {% set aviso = aviso_assinatura(salao) %}
+    {% if aviso and pode('assinatura.gerenciar') %}
+      <div class="faixa-assinatura {{ aviso.tipo }}"><span>{{ aviso.texto }}</span><a href="/minhaagenda/assinatura">Ver assinatura →</a></div>
+    {% endif %}
+    {% if mensagem %}<div data-toast-mensagem="{{ mensagem }}" hidden></div><div class="alert alert-success">✓ {{ mensagem }}</div>{% endif %}
+    {% if erro %}<div class="alert alert-danger">⚠ {{ erro }}</div>{% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="{{ asset('js/notificacoes.js') }}"></script>
+{% endblock %}

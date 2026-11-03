@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}E-mails enviados — Testes{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-painel.svg" /><link rel="apple-touch-icon" href="/static/img/fav-painel.svg" />{% endblock %}
+
+{% block body %}
+<div style="max-width: 1100px; margin: 0 auto; padding: 2rem;">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+    <div>
+      <h1 style="font-size:1.6rem; font-weight:800;">{{ icon('mail', 22) }} Caixa de saída (teste)</h1>
+      <p style="color:var(--text-muted);">E-mails que o sistema gerou. O envio real ainda não está ligado, então eles ficam apenas registrados aqui.</p>
+    </div>
+    <a href="/dev" class="btn-back">← Voltar ao painel de testes</a>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h2 class="card-title" style="margin-bottom:1rem;">Cobranças de contratação (memória — somem ao reiniciar o servidor)</h2>
+    {% if memoria %}
+      <div class="table-wrap"><table>
+        <thead><tr><th>Quando</th><th>Para</th><th>Assunto</th><th></th></tr></thead>
+        <tbody>
+          {% for e in memoria %}
+          <tr>
+            <td style="white-space:nowrap;">{{ e.quando.strftime('%d/%m %H:%M') }}</td>
+            <td>{{ e.destinatario }}</td>
+            <td>{{ e.assunto }}</td>
+            <td style="text-align:right;"><a href="/dev/emails/memoria/{{ loop.index0 }}" target="_blank" class="btn btn-sm btn-outline">Ver e-mail ↗</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    {% else %}
+      <p style="color:var(--text-muted);">Nenhuma ainda. Faça uma contratação em <a href="/contratar" style="color:var(--brand);">/contratar</a>.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:1rem;">Notificações de agendamento (banco de dados)</h2>
+    {% if registrados %}
+      <div class="table-wrap"><table>
+        <thead><tr><th>Quando</th><th>Tipo</th><th>Para</th><th>Assunto</th><th></th></tr></thead>
+        <tbody>
+          {% for n in registrados %}
+          <tr>
+            <td style="white-space:nowrap;">{{ n.criado_em.strftime('%d/%m %H:%M') if n.criado_em else '' }}</td>
+            <td><span class="badge badge-info">{{ n.tipo.value|replace('_', ' ') }}</span></td>
+            <td>{{ n.destinatario_email }}</td>
+            <td>{{ n.assunto }}</td>
+            <td style="text-align:right;"><a href="/dev/emails/{{ n.id }}" target="_blank" class="btn btn-sm btn-outline">Ver e-mail ↗</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    {% else %}
+      <p style="color:var(--text-muted);">Nenhuma notificação registrada ainda. Faça um agendamento na página pública de um salão.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

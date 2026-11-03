@@ -1,0 +1,58 @@
+{# Auditoria — routes/admin_seguranca.py. Logs guardados por RETENCAO_LOGS_DIAS (LGPD). #}
+{% extends "admin/admin_base.html" %}
+{% block title %}Auditoria — Admin SaaS{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <h1 style="font-size:1.75rem; font-weight:800; color:#1e1b4b;">Auditoria</h1>
+  <p style="color:var(--text-muted); font-size:.95rem;">Logins, alterações, pagamentos e ações do admin. Registros com mais de 6 meses são apagados automaticamente.</p>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem; padding:1.25rem;">
+  <form method="get" action="/admin/auditoria" style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:flex-end;">
+    <div><label class="form-label" style="font-size:.8rem;">Evento</label>
+      <select name="evento" class="form-control"><option value="">Todos</option>
+        {% for e in eventos %}<option value="{{ e }}" {% if f.evento == e %}selected{% endif %}>{{ e|replace('_', ' ')|capitalize }}</option>{% endfor %}
+      </select></div>
+    <div><label class="form-label" style="font-size:.8rem;">Salão</label>
+      <select name="salao_id" class="form-control" style="max-width:220px;"><option value="">Todos</option>
+        {% for s in saloes %}<option value="{{ s.id }}" {% if f.salao_id == s.id|string %}selected{% endif %}>{{ s.nome }}</option>{% endfor %}
+      </select></div>
+    <div><label class="form-label" style="font-size:.8rem;">De</label><input type="date" name="de" value="{{ f.de or '' }}" class="form-control"></div>
+    <div><label class="form-label" style="font-size:.8rem;">Até</label><input type="date" name="ate" value="{{ f.ate or '' }}" class="form-control"></div>
+    <label style="display:flex; gap:.4rem; align-items:center; font-size:.88rem; padding-bottom:.6rem;"><input type="checkbox" name="so_admin" value="1" {% if f.so_admin %}checked{% endif %}> Só ações do admin</label>
+    <button class="btn btn-primary" style="width:auto; background:#7c3aed;">Filtrar</button>
+    <a href="/admin/auditoria" class="btn btn-outline">Limpar</a>
+  </form>
+</div>
+
+<div class="card">
+  <div style="font-size:.85rem; color:var(--text-muted); margin-bottom:.75rem;">{{ total }} registro(s)</div>
+  {% if logs %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Quando</th><th>Evento</th><th>Quem</th><th>Salão</th><th>Detalhe</th><th>IP</th></tr></thead>
+    <tbody>
+    {% for l in logs %}
+      <tr>
+        <td style="font-size:.82rem; white-space:nowrap;">{{ l.criado_em.strftime('%d/%m/%Y %H:%M') if l.criado_em else '' }}</td>
+        <td><span class="badge {{ 'badge-danger' if 'FALHA' in l.evento.value or 'BLOQUEADO' in l.evento.value or 'LIMITE' in l.evento.value else 'badge-neutral' }}" style="font-size:.72rem;">{{ l.evento.value|replace('_', ' ')|capitalize }}</span></td>
+        <td style="font-size:.85rem;">{{ nomes_usuarios.get(l.usuario_id, '—') }}</td>
+        <td style="font-size:.85rem;">{% if l.salao_id %}<a href="/admin/saloes/{{ l.salao_id }}">{{ nomes_saloes.get(l.salao_id, '#' ~ l.salao_id) }}</a>{% else %}—{% endif %}</td>
+        <td style="font-size:.85rem; max-width:340px;">{{ l.descricao or '' }}</td>
+        <td style="font-family:var(--mono); font-size:.78rem;">{{ l.ip or '' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% if paginas > 1 %}
+  <div style="display:flex; gap:.5rem; justify-content:center; margin-top:1rem;">
+    {% if pagina > 1 %}<a class="btn btn-sm btn-outline" href="/admin/auditoria?{{ query_filtros }}{{ '&' if query_filtros }}pagina={{ pagina - 1 }}">← Anteriores</a>{% endif %}
+    <span style="padding:.4rem .6rem; font-size:.85rem;">Página {{ pagina }} de {{ paginas }}</span>
+    {% if pagina < paginas %}<a class="btn btn-sm btn-outline" href="/admin/auditoria?{{ query_filtros }}{{ '&' if query_filtros }}pagina={{ pagina + 1 }}">Próximas →</a>{% endif %}
+  </div>
+  {% endif %}
+  {% else %}
+    <p style="color:var(--text-muted); text-align:center; padding:2rem 0;">Nenhum registro com esses filtros.</p>
+  {% endif %}
+</div>
+{% endblock %}

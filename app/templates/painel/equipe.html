@@ -1,0 +1,133 @@
+{# Equipe do salão — rotas em routes/equipe.py, regras em services/equipe.py e app/permissoes.py #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Equipe — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap; margin-bottom:1.75rem;">
+  <div>
+    <h1 style="font-size:1.5rem; font-weight:800;">Equipe</h1>
+    <p style="color:var(--text-muted);">Quem trabalha no salão, a função de cada um e quem aparece para o cliente escolher na hora de agendar.</p>
+  </div>
+  <span class="badge {{ 'badge-warning' if vagas.restam == 0 else 'badge-purple' }}" style="font-size:.8rem; padding:.35rem .8rem;">
+    {{ vagas.usados }} de {{ vagas.limite }} pessoas no plano
+  </span>
+</div>
+
+{% if pode_convidar_papeis %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h2 class="card-title" style="margin-bottom:.35rem;">Convidar para a equipe</h2>
+  <p style="color:var(--text-muted); font-size:.88rem; margin-bottom:1rem;">
+    A pessoa recebe no e-mail um link pessoal, que vale só para aquele e-mail, uma única vez, por 7 dias.
+  </p>
+  <form method="post" action="/minhaagenda/equipe/convidar" style="display:grid; grid-template-columns: 2fr 1fr auto; gap:.75rem; align-items:end;">{{ csrf_input() }}
+    <div class="form-group" style="margin:0;">
+      <label class="form-label" for="conv_email">E-mail</label>
+      <input class="form-control" type="email" id="conv_email" name="email" required placeholder="pessoa@exemplo.com">
+    </div>
+    <div class="form-group" style="margin:0;">
+      <label class="form-label" for="conv_papel">Função</label>
+      <select class="form-control" id="conv_papel" name="papel">
+        {% for p in pode_convidar_papeis %}
+          {% if p != 'GERENTE' or vagas.permite_gerente %}<option value="{{ p }}">{{ rotulos[p] }}</option>{% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:auto;" {% if vagas.restam == 0 %}disabled title="Limite do plano atingido"{% endif %}>Enviar convite</button>
+  </form>
+  {% if not vagas.permite_gerente %}
+    <small style="display:block; margin-top:.6rem; color:var(--text-muted);">A função <b>Gerente</b> está disponível a partir do plano Pro.</small>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom:1.5rem;">
+  <h2 class="card-title" style="margin-bottom:1rem;">Pessoas na equipe</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Pessoa</th><th>Função</th><th>Atende clientes</th><th>Comissão</th><th style="text-align:right;">Ações</th></tr></thead>
+    <tbody>
+    {% for m in membros %}
+      <tr>
+        <td>
+          <div style="display:flex; align-items:center; gap:.7rem;">
+            {% if m.foto %}<img src="{{ m.foto }}" alt="" class="avatar">{% else %}<span class="avatar">{{ m.nome[0]|upper }}</span>{% endif %}
+            <div><b>{{ m.nome }}</b>{% if m.id == usuario.id %} <span style="color:var(--text-muted); font-size:.8rem;">(você)</span>{% endif %}
+              <div style="font-size:.8rem; color:var(--text-muted);">{{ m.especialidade or '—' }} · {{ m.email }}</div></div>
+          </div>
+        </td>
+        <td><span class="papel-tag">{{ rotulos[m.role.value] }}</span></td>
+        <td>{{ 'Sim' if m.atende_clientes else 'Não' }}</td>
+        <td style="font-size:.85rem;">{{ regra_comissao(m) }}{% if pode('comissoes.gerenciar') %}<div><a href="/minhaagenda/comissoes" style="font-size:.78rem;">alterar regra</a></div>{% endif %}</td>
+        <td style="text-align:right;">
+          <details class="acoes-membro">
+            <summary class="btn btn-sm btn-outline">Editar</summary>
+            <div class="acoes-membro-painel">
+              {% if pode('comissoes.gerenciar') and (m.role.value != 'DONO' or usuario.role.value == 'DONO') %}
+              <form method="post" action="/minhaagenda/equipe/{{ m.id }}/profissional">{{ csrf_input() }}
+                <label class="form-label">Especialidade</label>
+                <input class="form-control" name="especialidade" value="{{ m.especialidade or '' }}" placeholder="Ex: Cabeleireira">
+                <label class="form-label" style="margin-top:.5rem;">Comissão (%)</label>
+                <input class="form-control" name="comissao" inputmode="decimal" value="{{ (m.comissao_percentual|string).replace('.', ',') if m.comissao_percentual is not none else '' }}" placeholder="Ex: 40">
+                <label style="display:flex; gap:.4rem; align-items:center; margin:.6rem 0; font-size:.88rem;"><input type="checkbox" name="atende_clientes" {% if m.atende_clientes %}checked{% endif %}> Aparece para o cliente escolher</label>
+                <button class="btn btn-sm btn-primary" style="width:100%;">Salvar</button>
+              </form>
+              {% endif %}
+              {% if pode('equipe.papeis') and m.role.value != 'DONO' %}
+              <form method="post" action="/minhaagenda/equipe/{{ m.id }}/papel" style="margin-top:.6rem;">{{ csrf_input() }}
+                <label class="form-label">Função</label>
+                <div style="display:flex; gap:.4rem;">
+                  <select class="form-control" name="papel">
+                    <option value="FUNCIONARIO" {% if m.role.value == 'FUNCIONARIO' %}selected{% endif %}>Funcionário</option>
+                    {% if vagas.permite_gerente %}<option value="GERENTE" {% if m.role.value == 'GERENTE' %}selected{% endif %}>Gerente</option>{% endif %}
+                  </select>
+                  <button class="btn btn-sm btn-outline">Mudar</button>
+                </div>
+              </form>
+              <form method="post" action="/minhaagenda/equipe/{{ m.id }}/enviar-senha" style="margin-top:.6rem;">{{ csrf_input() }}
+                <button class="btn btn-sm btn-outline" style="width:100%;">Enviar link de nova senha</button>
+              </form>
+              <form method="post" action="/minhaagenda/equipe/{{ m.id }}/remover" style="margin-top:.6rem;" onsubmit="return confirm('Remover {{ m.nome }} da equipe? A pessoa não conseguirá mais entrar.');">{{ csrf_input() }}
+                <button class="btn btn-sm btn-danger" style="width:100%;">Remover da equipe</button>
+              </form>
+              {% endif %}
+            </div>
+          </details>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+{% if convites %}
+<div class="card">
+  <h2 class="card-title" style="margin-bottom:1rem;">Convites aguardando</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>E-mail</th><th>Função</th><th>Expira em</th><th style="text-align:right;">Ações</th></tr></thead>
+    <tbody>
+    {% for c in convites %}
+      <tr>
+        <td>{{ c.email }}</td>
+        <td><span class="papel-tag">{{ rotulos[c.papel] }}</span></td>
+        <td>{{ c.expira_em.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td style="text-align:right;">
+          {% if pode('equipe.convidar') %}
+          <form method="post" action="/minhaagenda/equipe/convites/{{ c.id }}/reenviar" style="display:inline;">{{ csrf_input() }}<button class="btn btn-sm btn-outline">Reenviar</button></form>
+          <form method="post" action="/minhaagenda/equipe/convites/{{ c.id }}/cancelar" style="display:inline;">{{ csrf_input() }}<button class="btn btn-sm btn-outline" style="color:var(--danger);">Cancelar</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endif %}
+
+<style>
+  .acoes-membro { display: inline-block; position: relative; text-align: left; }
+  .acoes-membro summary { list-style: none; cursor: pointer; }
+  .acoes-membro summary::-webkit-details-marker { display: none; }
+  .acoes-membro-painel { position: absolute; right: 0; top: calc(100% + 6px); width: 260px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: var(--shadow-lg); padding: 1rem; z-index: 50; }
+  @media (max-width: 760px) { form[action$="/convidar"] { grid-template-columns: 1fr !important; } }
+</style>
+{% endblock %}

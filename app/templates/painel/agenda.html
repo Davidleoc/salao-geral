@@ -1,0 +1,79 @@
+{# Agenda do dia — routes/agenda.py. Funcionário vê só a própria; dono/gerente filtram por profissional. #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Agenda — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom: 1.75rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:800;">{{ 'Agenda do salão' if ve_todos else 'Minha agenda' }}</h1>
+    <p style="color:var(--text-muted);">{{ 'Todos os profissionais — filtre por pessoa se quiser.' if ve_todos else 'Seus atendimentos do dia.' }}</p>
+  </div>
+  <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+    <a href="/minhaagenda/agenda/novo" class="btn btn-primary" style="width:auto;">+ Novo agendamento</a>
+    <a href="/{{ salao.slug }}" target="_blank" class="btn btn-outline">Página pública ↗</a>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <form method="get" action="/minhaagenda/agenda" style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+    <label style="font-weight:600;" for="ag_data">Data</label>
+    <input type="date" id="ag_data" name="data" value="{{ data_alvo }}" class="form-control" style="width:auto;" onchange="this.form.submit()">
+    {% if ve_todos and profissionais %}
+      <label style="font-weight:600; margin-left:.5rem;" for="ag_prof">Profissional</label>
+      <select id="ag_prof" name="profissional" class="form-control" style="width:auto;" onchange="this.form.submit()">
+        <option value="">Todos</option>
+        {% for p in profissionais %}<option value="{{ p.id }}" {% if filtro_prof == p.id %}selected{% endif %}>{{ p.nome }}</option>{% endfor %}
+      </select>
+    {% endif %}
+    <a href="/minhaagenda/agenda" class="btn btn-sm btn-outline">Hoje</a>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">{{ data_alvo.strftime('%d/%m/%Y') }} <span class="badge badge-neutral" style="margin-left:0.5rem;">{{ agendamentos|length }}</span></h2>
+  </div>
+
+  {% if agendamentos %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Horário</th><th>Cliente</th><th>Serviço</th>{% if ve_todos %}<th>Profissional</th>{% endif %}<th>Status</th><th style="text-align:right;">Ações</th></tr></thead>
+      <tbody>
+        {% for a in agendamentos %}
+        <tr>
+          <td style="font-weight:700; font-size:1.05rem; color:var(--brand);">
+            {{ a.hora_inicio.strftime('%H:%M') }}
+            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">até {{ a.hora_fim.strftime('%H:%M') }}</div>
+          </td>
+          <td>
+            {% if pode('clientes.ver') %}<a href="/minhaagenda/clientes/{{ a.cliente_id }}" style="color:var(--text); font-weight:600;">{{ a.cliente.nome }}</a>
+            {% else %}<b>{{ a.cliente.nome }}</b>{% endif %}
+            <div style="font-size:0.8rem; color:var(--text-muted);">{{ a.cliente.telefone }}</div>
+          </td>
+          <td>{{ a.servico.nome }}<div style="font-size:0.8rem; color:var(--text-muted);">R$ {{ a.valor|brl }}{% if a.pacote_cliente_id %} · pacote{% endif %}</div></td>
+          {% if ve_todos %}
+          <td>
+            {% if a.profissional %}
+              <span style="display:inline-flex; align-items:center; gap:.45rem;">
+                {% if a.profissional.foto %}<img src="{{ a.profissional.foto }}" alt="" class="avatar" style="width:28px;height:28px;">{% else %}<span class="avatar" style="width:28px;height:28px;font-size:.8rem;">{{ a.profissional.nome[0]|upper }}</span>{% endif %}
+                {{ a.profissional.nome.split()[0] }}
+              </span>
+            {% else %}<span style="color:var(--text-light);">—</span>{% endif %}
+          </td>
+          {% endif %}
+          <td>
+            {% set st = a.status.value %}
+            <span class="badge {{ {'AGENDADO':'badge-warning','CONFIRMADO':'badge-info','CONCLUIDO':'badge-success'}.get(st, 'badge-neutral') }}">{{ a.status|status_label }}</span>
+          </td>
+          <td style="text-align:right;"><a href="/minhaagenda/agenda/{{ a.id }}" class="btn btn-sm btn-outline">Detalhes</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  {% else %}
+    <div style="text-align:center; padding:4rem 1rem; color:var(--text-muted);">
+      <div style="margin-bottom:1rem; opacity:.5;">{{ icon('calendar', 44) }}</div>
+      Nenhum agendamento para esta data.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

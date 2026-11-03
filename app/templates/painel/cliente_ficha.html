@@ -1,0 +1,129 @@
+{% extends "painel/painel_base.html" %}
+{% block title %}Ficha: {{ cliente.nome }} — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+  <div style="display:flex; align-items:center; gap:1rem;">
+    <div style="width:60px; height:60px; border-radius:50%; background:var(--brand-light); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:700;">
+      {{ cliente.nome[0] | upper }}
+    </div>
+    <div>
+      <h1 style="font-size: 1.5rem; font-weight:700;">
+        {{ cliente.nome }}
+        {% if recorrente %}
+          <span class="badge badge-purple" style="margin-left:0.5rem; font-size:0.75rem;">{{ icon('star', 12) }} Recorrente</span>
+        {% endif %}
+      </h1>
+      <p style="color:var(--text-muted); font-size:0.95rem;">
+        Cliente desde {{ meses[cliente.criado_em.month - 1] }} de {{ cliente.criado_em.year }}
+      </p>
+    </div>
+  </div>
+  <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
+    <a href="/minhaagenda/clientes" class="btn-back">← Voltar</a>
+    <a href="/minhaagenda/clientes/{{ cliente.id }}/editar" class="btn btn-outline">Editar Ficha</a>
+    <a href="/minhaagenda/agenda/novo?cliente={{ cliente.id }}" class="btn btn-primary" style="width:auto;">Agendar</a>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: minmax(260px, 1fr) 2fr; gap: 2rem;">
+  
+  <!-- Info Lateral -->
+  <div>
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3 style="font-size:1rem; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Contato</h3>
+      
+      <div style="margin-bottom:0.75rem;">
+        <div style="font-size:0.8rem; color:var(--text-muted);">Telefone/WhatsApp</div>
+        <div style="font-weight:500;">
+          {{ cliente.telefone }}
+          <a href="{{ cliente.telefone|link_whatsapp }}" target="_blank" rel="noopener" style="text-decoration:none; margin-left:0.5rem;" title="Abrir no WhatsApp" style="color:#16a34a;">WhatsApp</a>
+        </div>
+      </div>
+      
+      <div>
+        <div style="font-size:0.8rem; color:var(--text-muted);">E-mail</div>
+        <div style="font-weight:500;">{{ cliente.email or '--' }}</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3 style="font-size:1rem; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Observações</h3>
+      {% if cliente.observacoes %}
+        <p style="font-size:0.9rem; white-space:pre-wrap;">{{ cliente.observacoes }}</p>
+      {% else %}
+        <p style="font-size:0.9rem; color:var(--text-muted); font-style:italic;">Nenhuma observação registrada.</p>
+      {% endif %}
+    </div>
+
+    {% if pode('pacotes.gerenciar') %}
+    <div class="card" style="margin-top:1.5rem;">
+      <h3 style="font-size:1rem; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Pacotes</h3>
+      {% for pc in pacotes_cliente %}
+        <div style="display:flex; justify-content:space-between; gap:.5rem; font-size:.9rem; margin-bottom:.45rem;">
+          <span><b>{{ pc.pacote.nome }}</b></span>
+          <span style="color:var(--text-muted);">{{ pc.sessoes_restantes }} de {{ pc.sessoes_total }} · até {{ pc.validade.strftime('%d/%m') }}</span>
+        </div>
+      {% else %}
+        <p style="font-size:0.9rem; color:var(--text-muted);">Nenhum pacote ativo.</p>
+      {% endfor %}
+      <a href="/minhaagenda/pacotes?cliente={{ cliente.id }}#vender" class="btn btn-sm btn-outline" style="margin-top:.6rem;">Vender pacote</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Histórico -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Histórico de Agendamentos ({{ total_agendamentos }})</h3>
+      </div>
+      
+      {% if historico %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data / Hora</th>
+                <th>Serviço</th>
+                <th>Status</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ag in historico %}
+              <tr>
+                <td>
+                  <div style="font-weight:500;">{{ ag.data.strftime('%d/%m/%Y') }}</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted);">{{ ag.hora_inicio.strftime('%H:%M') }}</div>
+                </td>
+                <td><a href="/minhaagenda/agenda/{{ ag.id }}" style="color:var(--text); font-weight:500;">{{ ag.servico.nome }}</a></td>
+                <td>
+                  {% set st = ag.status.value %}
+                  {% if st == 'CONCLUIDO' %}
+                    <span class="badge badge-success">Concluído</span>
+                  {% elif 'CANCELADO' in st %}
+                    <span class="badge badge-danger">Cancelado</span>
+                  {% elif st == 'NAO_COMPARECEU' %}
+                    <span class="badge badge-neutral">Não compareceu</span>
+                  {% elif st == 'CONFIRMADO' %}
+                    <span class="badge badge-info">Confirmado</span>
+                  {% else %}
+                    <span class="badge badge-warning">Agendado</span>
+                  {% endif %}
+                </td>
+                <td>R$ {{ ag.valor|brl }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="text-align:center; padding:2rem; color:var(--text-muted);">
+          Nenhum agendamento encontrado para este cliente.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

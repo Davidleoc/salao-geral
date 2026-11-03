@@ -1,0 +1,27 @@
+/* Formulário de contratação /contratar/{plano}
+   Usado em: app/templates/contratacao/form.html
+   (extraído do template para facilitar a manutenção) */
+
+.checkout-page { min-height: 100vh; background: var(--bg); padding-bottom: 4rem; }
+.checkout-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; max-width: 1240px; margin: 0 auto; }
+.checkout-brand { font-size: 1.35rem; font-weight: 800; color: var(--brand); text-decoration: none; display: flex; align-items: center; gap: .55rem; }
+.checkout-container { max-width: 1240px; margin: 1rem auto 0; padding: 0 2rem; display: grid; grid-template-columns: 1.5fr 1fr; gap: 2.5rem; align-items: flex-start; }
+.checkout-summary-card { background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 2rem; box-shadow: var(--shadow); position: sticky; top: 1.5rem; }
+.sec-title { font-size: 1.1rem; font-weight: 700; color: #1e1b4b; margin: 2rem 0 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: .5rem; }
+.sec-title:first-child { margin-top: 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.slug-preview { font-family: var(--mono); font-size: .82rem; color: var(--brand-dark); margin-top: .35rem; }
+.hint { color: var(--text-muted); font-size: .78rem; display: block; margin-top: .3rem; }
+.field-error { color: #b91c1c; font-size: .8rem; display: none; margin-top: .3rem; font-weight: 500; }
+.form-control.is-invalid + .field-error, .form-control.is-invalid ~ .field-error { display: block; }
+.form-control.is-valid { border-color: #86efac; }
+.period-opt { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; cursor: pointer; display: flex; align-items: center; gap: .75rem; background: #fff; }
+.period-opt:has(input:checked) { border-color: var(--brand); background: #faf9ff; }
+.terms-box { display: flex; gap: .75rem; align-items: flex-start; background: #faf9ff; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; font-size: .9rem; line-height: 1.55; }
+.terms-box input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--brand); flex-shrink: 0; }
+@media (max-width: 900px) {
+  .checkout-container { grid-template-columns: 1fr; padding: 0 1rem; }
+  .checkout-summary-card { order: -1; position: static; }
+  .checkout-nav { padding: 1rem; }
+}
+@media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }

@@ -1,0 +1,63 @@
+{# Dashboard de quem é Funcionário: só a própria agenda e os próprios ganhos (rota: routes/dashboard.py) #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Meu painel — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.75rem;">
+  <h1 style="font-size: 1.5rem; font-weight: 800;">Olá, {{ usuario.nome.split()[0] }}!</h1>
+  <p style="color: var(--text-muted);">Sua agenda de hoje, {{ hoje.strftime('%d/%m/%Y') }}, e seus ganhos do mês.</p>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card" style="border-left: 4px solid var(--brand);">
+    <div class="kpi-label">Atendimentos hoje</div>
+    <div class="kpi-value">{{ agendamentos_hoje|length }}</div>
+  </div>
+  <div class="kpi-card" style="border-left: 4px solid var(--success);">
+    <div class="kpi-label">Concluídos no mês</div>
+    <div class="kpi-value">{{ ganhos_mes.atendimentos }}</div>
+  </div>
+  <div class="kpi-card" style="border-left: 4px solid #0ea5e9;">
+    <div class="kpi-label">Minhas comissões no mês</div>
+    <div class="kpi-value" style="color: var(--success);">R$ {{ ganhos_mes.comissao|brl }}</div>
+    <div class="kpi-sub"><a href="/minhaagenda/meus-ganhos" style="color: var(--brand);">Ver detalhes →</a></div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Hoje</h2><a href="/minhaagenda/agenda" class="btn btn-sm btn-outline">Abrir agenda</a></div>
+    {% if agendamentos_hoje %}
+      <div class="table-wrap"><table>
+        <tbody>
+        {% for a in agendamentos_hoje %}
+          <tr>
+            <td style="font-weight:700; width:70px;">{{ a.hora_inicio.strftime('%H:%M') }}</td>
+            <td><a href="/minhaagenda/agenda/{{ a.id }}" style="color:var(--text); font-weight:600;">{{ a.cliente.nome }}</a><div style="font-size:.8rem; color:var(--text-muted);">{{ a.servico.nome }}</div></td>
+            <td style="text-align:right;"><span class="badge badge-neutral">{{ a.status|status_label }}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    {% else %}
+      <p style="color: var(--text-muted);">Nenhum atendimento para você hoje.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Próximos</h2></div>
+    {% if proximos %}
+      <div class="table-wrap"><table><tbody>
+        {% for a in proximos %}
+          <tr>
+            <td style="width:110px;"><b>{{ a.data.strftime('%d/%m') }}</b> {{ a.hora_inicio.strftime('%H:%M') }}</td>
+            <td>{{ a.cliente.nome }}<div style="font-size:.8rem; color:var(--text-muted);">{{ a.servico.nome }}</div></td>
+          </tr>
+        {% endfor %}
+      </tbody></table></div>
+    {% else %}
+      <p style="color: var(--text-muted);">Sem próximos agendamentos.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

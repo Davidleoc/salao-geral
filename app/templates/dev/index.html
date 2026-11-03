@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Painel de Testes — MeuAgendamento{% endblock %}
+{% block favicon %}<link rel="icon" type="image/svg+xml" href="/static/img/fav-painel.svg" /><link rel="apple-touch-icon" href="/static/img/fav-painel.svg" />{% endblock %}
+
+{% block head %}
+<style>
+  .dev { max-width: 1240px; margin: 0 auto; padding: 2rem; }
+  .dev h1 { font-size: 1.8rem; font-weight: 800; }
+  .dev h2 { font-size: 1.15rem; font-weight: 800; margin: 2.25rem 0 1rem; scroll-margin-top: 1rem; }
+  .dev-warn { background: #fef3c7; border: 1.5px solid #fcd34d; color: #92400e; border-radius: 10px; padding: .8rem 1rem; font-size: .9rem; margin: 1rem 0 0; }
+  .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1rem; }
+  .ep-group h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: .5rem; }
+  .ep { display: flex; gap: .6rem; align-items: baseline; padding: .4rem 0; border-bottom: 1px dashed #eee; font-size: .88rem; }
+  .ep:last-child { border-bottom: none; }
+  .m { font-family: var(--mono); font-size: .7rem; font-weight: 800; padding: .1rem .4rem; border-radius: 4px; flex-shrink: 0; width: 44px; text-align: center; }
+  .m.get { background: #dbeafe; color: #1e40af; } .m.post { background: #dcfce7; color: #166534; }
+  .ep a, .ep code { font-family: var(--mono); color: var(--brand-dark); text-decoration: none; word-break: break-all; }
+  .ep a:hover { text-decoration: underline; }
+  .ep span.d { color: var(--text-muted); margin-left: auto; text-align: right; font-size: .8rem; }
+  .acts { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+  .acts form { display: inline; }
+  .acts .btn { width: auto; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="dev">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
+    <div>
+      <h1>{{ icon('settings', 26) }} Painel de Testes</h1>
+      <p style="color:var(--text-muted);">Ambiente: <strong>{{ app_env }}</strong> · Tudo o que você precisa para testar o sistema localmente.</p>
+    </div>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+      <a href="/docs" target="_blank" class="btn btn-outline">Swagger /docs ↗</a>
+      <a href="/dev/emails" class="btn btn-outline">{{ icon('mail', 16) }} E-mails enviados ({{ total_emails }})</a>
+      <form method="post" action="/dev/tarefas" style="display:inline;">{{ csrf_input() }}<button class="btn btn-outline" title="Lembretes, cobrança, lista de espera e retenção LGPD">{{ icon('clock', 16) }} Rodar tarefas automáticas agora</button></form>
+    </div>
+  </div>
+  <div class="dev-warn">⚠ Estas rotas só existem com <code>APP_ENV</code> diferente de <code>production</code>. “Entrar como” acessa qualquer conta sem senha.</div>
+
+  {% if mensagem %}<div class="alert alert-success" style="margin-top:1rem;">✓ {{ mensagem }}</div>{% endif %}
+
+  <!-- Usuários -->
+  <h2 id="usuarios">{{ icon('users', 20) }} Entrar como (sem senha)</h2>
+  <div class="card" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Usuário</th><th>Perfil</th><th>Salão</th><th style="text-align:right;">Ação</th></tr></thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr>
+            <td><div style="font-weight:600;">{{ u.nome }}</div><div style="font-size:.8rem; color:var(--text-muted);">{{ u.email }}</div></td>
+            <td><span class="badge {{ 'badge-purple' if u.role.value == 'ADMIN' else 'badge-info' }}">{{ u.role.value }}</span></td>
+            <td>{{ u.salao.nome if u.salao else '—' }}{% if u.salao and not u.salao.ativo %} <span class="badge badge-warning">inativo</span>{% endif %}</td>
+            <td><div class="acts"><form method="post" action="/dev/login/{{ u.id }}">{{ csrf_input() }}<button class="btn btn-sm btn-primary" {% if not u.ativo %}disabled{% endif %}>Entrar como →</button></form></div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p style="font-size:.85rem; color:var(--text-muted); margin-top:.5rem;">Logins do seed: <code>admin@seudominio.com</code> / <code>admin123456</code> · <code>dono@studiobella.com</code> / <code>senha123456</code></p>
+
+  <!-- Salões -->
+  <h2 id="saloes">{{ icon('store', 20) }} Salões e assinaturas</h2>
+  <div class="card" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Salão</th><th>Plano</th><th>Assinatura</th><th style="text-align:right;">Ações de teste</th></tr></thead>
+        <tbody>
+          {% for s in saloes %}
+          {% set a = assinaturas.get(s.id) %}
+          <tr>
+            <td>
+              <div style="font-weight:600;">{{ s.nome }}</div>
+              <a href="/{{ s.slug }}" target="_blank" style="font-family:var(--mono); font-size:.8rem; color:var(--brand);">/{{ s.slug }}</a>
+              <div style="font-size:.78rem; color:var(--text-muted);">{{ s.email_principal }}</div>
+            </td>
+            <td>{{ a.plano.nome if a else '—' }}</td>
+            <td>
+              {% if a %}
+                <span class="badge {{ 'badge-success' if a.status.value == 'ATIVO' else ('badge-warning' if a.status.value == 'AGUARDANDO_PAGAMENTO' else 'badge-danger') }}">{{ a.status.value|replace('_', ' ') }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              <div class="acts">
+                {% if a and a.status.value != 'ATIVO' %}
+                  <form method="post" action="/dev/saloes/{{ s.id }}/ativar">{{ csrf_input() }}<button class="btn btn-sm btn-primary">{{ icon('card', 14) }} Simular pagamento</button></form>
+                {% elif a %}
+                  <form method="post" action="/dev/saloes/{{ s.id }}/suspender">{{ csrf_input() }}<button class="btn btn-sm btn-outline">Suspender</button></form>
+                {% endif %}
+                <form method="post" action="/dev/saloes/{{ s.id }}/dados-exemplo">{{ csrf_input() }}<button class="btn btn-sm btn-outline">{{ icon('trending', 14) }} Criar atendimentos de exemplo</button></form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Endpoints -->
+  <h2 id="endpoints">{{ icon('list', 20) }} Endpoints do sistema</h2>
+  <div class="ep-grid">
+    <div class="card ep-group">
+      <h3>Público — contratação</h3>
+      <div class="ep"><span class="m get">GET</span><a href="/contratar">/contratar</a><span class="d">Landing, planos e avaliações</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/contratar/1">/contratar/{plano_id}</a><span class="d">Formulário de contratação</span></div>
+      <div class="ep"><span class="m post">POST</span><code>/contratar/{plano_id}</code><span class="d">Cria salão + dono + assinatura</span></div>
+      <div class="ep"><span class="m get">GET</span><code>/contratar/sucesso?c={código}</code><span class="d">Confirme seu e-mail</span></div>
+      <div class="ep"><span class="m post">POST</span><a href="/contratar#avaliacoes">/contratar/avaliar</a><span class="d">Avaliação de contratante</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/termos">/termos</a><span class="d">Termos de Uso / LGPD</span></div>
+    </div>
+
+    <div class="card ep-group">
+      <h3>Público — cliente final</h3>
+      {% set slug_ex = saloes[0].slug if saloes else 'studio-bella' %}
+      <div class="ep"><span class="m get">GET</span><a href="/{{ slug_ex }}">/{slug}</a><span class="d">Página do salão (Serviços)</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/{{ slug_ex }}#sobre">/{slug}#sobre</a><span class="d">Aba Sobre</span></div>
+      <div class="ep"><span class="m get">GET</span><code>/{slug}/agendar/{servico_id}</code><span class="d">Escolher data e horário</span></div>
+      <div class="ep"><span class="m get">GET</span><code>/api/public/{slug}/disponibilidade?servico_id=&amp;data=</code><span class="d">Horários livres (JSON)</span></div>
+      <div class="ep"><span class="m post">POST</span><code>/{slug}/agendar/{servico_id}</code><span class="d">Confirmar agendamento</span></div>
+    </div>
+
+    <div class="card ep-group">
+      <h3>Autenticação</h3>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/login">/minhaagenda/login</a><span class="d">Login</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/recuperar-senha">/minhaagenda/recuperar-senha</a><span class="d">Recuperar senha</span></div>
+      <div class="ep"><span class="m post">POST</span><code>/minhaagenda/logout</code><span class="d">Sair</span></div>
+    </div>
+
+    <div class="card ep-group">
+      <h3>Painel do salão (precisa estar logado)</h3>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/dashboard">/minhaagenda/dashboard</a><span class="d">Dashboard</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/agenda">/minhaagenda/agenda</a><span class="d">Agenda</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/clientes">/minhaagenda/clientes</a><span class="d">Clientes e fichas</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/servicos">/minhaagenda/servicos</a><span class="d">Serviços (preço e custo)</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/relatorios?meses_filtro=12">/minhaagenda/relatorios</a><span class="d">Lucro por serviço</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/configuracoes">/minhaagenda/configuracoes</a><span class="d">Cores, Sobre e fotos</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/configuracoes/horarios">/minhaagenda/configuracoes/horarios</a><span class="d">Horários</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/minhaagenda/assinatura">/minhaagenda/assinatura</a><span class="d">Assinatura</span></div>
+    </div>
+
+    <div class="card ep-group">
+      <h3>Admin do SaaS (perfil ADMIN)</h3>
+      <div class="ep"><span class="m get">GET</span><a href="/admin">/admin</a><span class="d">Dashboard geral</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/admin/saloes">/admin/saloes</a><span class="d">Salões</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/admin/planos">/admin/planos</a><span class="d">Planos (inclui máx. fotos)</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/admin/assinaturas">/admin/assinaturas</a><span class="d">Confirmar pagamentos</span></div>
+    </div>
+
+    <div class="card ep-group">
+      <h3>Testes e saúde</h3>
+      <div class="ep"><span class="m get">GET</span><a href="/health">/health</a><span class="d">Banco conectado?</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/docs">/docs</a><span class="d">Swagger (todas as rotas)</span></div>
+      <div class="ep"><span class="m get">GET</span><a href="/dev/emails">/dev/emails</a><span class="d">E-mails “enviados”</span></div>
+      <div class="ep"><span class="m post">POST</span><code>/dev/login/{usuario_id}</code><span class="d">Entrar sem senha</span></div>
+      <div class="ep"><span class="m post">POST</span><code>/dev/saloes/{id}/ativar</code><span class="d">Simular pagamento</span></div>
+      <div class="ep"><span class="m post">POST</span><code>/dev/saloes/{id}/dados-exemplo</code><span class="d">Gerar atendimentos</span></div>
+    </div>
+  </div>
+
+  <h2>{{ icon('check-circle', 20) }} Roteiro rápido de teste</h2>
+  <div class="card">
+    <ol style="padding-left:1.25rem; display:grid; gap:.5rem; font-size:.95rem;">
+      <li>Abra <a href="/contratar">/contratar</a>, escolha um plano e cadastre um negócio (teste telefone com letras, e-mails diferentes etc.).</li>
+      <li>Veja o e-mail de cobrança em <a href="/dev/emails">/dev/emails</a>.</li>
+      <li>Aqui no painel, clique em <strong>Simular pagamento</strong> no salão novo.</li>
+      <li>Volte em <a href="/contratar#avaliacoes">/contratar#avaliacoes</a> e avalie usando o e-mail do cadastro.</li>
+      <li>Clique em <strong>Entrar como</strong> no dono, cadastre serviços com custo e use <strong>Criar atendimentos de exemplo</strong> para ver os <a href="/minhaagenda/relatorios?meses_filtro=12">relatórios de lucro</a>.</li>
+      <li>Em Configurações, escolha as cores, escreva o “Sobre”, envie fotos (Pro/Premium) e veja a página pública.</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}

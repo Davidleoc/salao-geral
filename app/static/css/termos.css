@@ -1,0 +1,23 @@
+/* Termos de Uso e Política de Privacidade
+   Usado em: app/templates/contratacao/termos.html
+   (extraído do template para facilitar a manutenção) */
+
+.terms-page { background: var(--bg); min-height: 100vh; padding-bottom: 4rem; }
+.terms-nav { max-width: 1100px; margin: 0 auto; padding: 1.25rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+.terms-brand { display: flex; align-items: center; gap: .55rem; font-size: 1.3rem; font-weight: 800; color: var(--brand); text-decoration: none; }
+.terms-layout { max-width: 1100px; margin: 0 auto; padding: 0 2rem; display: grid; grid-template-columns: 260px 1fr; gap: 2.5rem; align-items: start; }
+.terms-toc { position: sticky; top: 1.5rem; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; font-size: .85rem; }
+.terms-toc a { display: block; color: var(--text-muted); text-decoration: none; padding: .3rem 0; }
+.terms-toc a:hover { color: var(--brand); }
+.terms-doc { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 3rem; line-height: 1.75; color: #1f2937; }
+.terms-doc h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.5px; line-height: 1.2; margin-bottom: .5rem; }
+.terms-doc h2 { font-size: 1.2rem; font-weight: 800; margin: 2.25rem 0 .75rem; color: #111827; scroll-margin-top: 1rem; }
+.terms-doc p, .terms-doc li { font-size: .97rem; margin-bottom: .7rem; }
+.terms-doc ul { padding-left: 1.4rem; margin-bottom: 1rem; }
+.terms-highlight { background: #faf9ff; border: 1.5px solid #c7d2fe; border-radius: var(--radius-sm); padding: 1.25rem 1.5rem; margin: 1rem 0; }
+@media (max-width: 860px) {
+  .terms-layout { grid-template-columns: 1fr; padding: 0 1rem; }
+  .terms-toc { position: static; }
+  .terms-doc { padding: 1.5rem; }
+  .terms-nav { padding: 1rem; }
+}

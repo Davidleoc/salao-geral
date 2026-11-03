@@ -1,0 +1,120 @@
+{% extends "emails/email_base.html" %}
+
+{% block title %}Novo Agendamento — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+  <!-- Emblema -->
+  <tr>
+    <td style="text-align: center; padding-bottom: 20px;">
+      <div style="display: inline-block; background-color: #dbeafe; border: 1px solid #93c5fd; border-radius: 9999px; padding: 6px 18px; margin-bottom: 12px;">
+        <span style="color: #1d4ed8; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;">
+          📅 Novo Agendamento Recebido
+        </span>
+      </div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.3;">
+        Um cliente acabou de agendar!
+      </h2>
+    </td>
+  </tr>
+
+  <!-- Mensagem -->
+  <tr>
+    <td style="padding-bottom: 24px; font-size: 15px; color: #475569; line-height: 1.6;">
+      Olá, equipe do <strong>{{ salao.nome }}</strong>!<br>
+      Um novo agendamento foi registrado na plataforma. Confira os detalhes abaixo:
+    </td>
+  </tr>
+
+  <!-- Detalhes -->
+  <tr>
+    <td style="padding-bottom: 28px;">
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="info-box" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 22px;">
+        <tr>
+          <td style="padding-bottom: 12px; border-bottom: 1px solid #edf2f7;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Cliente</span>
+            <div style="font-size: 16px; font-weight: 700; color: #1e293b; margin-top: 2px;">
+              {{ cliente.nome }}
+            </div>
+            <div style="font-size: 13px; color: #64748b; margin-top: 2px;">
+              📱 {{ cliente.telefone or "Não informado" }}
+              {% if cliente.email %} · ✉ {{ cliente.email }}{% endif %}
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td width="50%" style="vertical-align: top;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Serviço</span>
+                  <div style="font-size: 15px; font-weight: 600; color: #1e293b; margin-top: 2px;">
+                    💅 {{ servico.nome }}
+                  </div>
+                </td>
+                <td width="50%" style="vertical-align: top;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Valor</span>
+                  <div style="font-size: 16px; font-weight: 800; color: {{ cor_primaria }}; margin-top: 2px;">
+                    {{ valor_formatado }}
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td width="50%" style="vertical-align: top;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Data</span>
+                  <div style="font-size: 15px; font-weight: 600; color: #1e293b; margin-top: 2px;">
+                    📅 {{ data_formatada }}
+                  </div>
+                </td>
+                <td width="50%" style="vertical-align: top;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Horário</span>
+                  <div style="font-size: 15px; font-weight: 600; color: #1e293b; margin-top: 2px;">
+                    ⏰ {{ hora_inicio_formatada }}{% if hora_fim_formatada %} às {{ hora_fim_formatada }}{% endif %}
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        {% if profissional and profissional.nome %}
+        <tr>
+          <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Profissional Solicitado</span>
+            <div style="font-size: 14px; font-weight: 600; color: #1e293b; margin-top: 2px;">
+              👤 {{ profissional.nome }}
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+
+        {% if agendamento.forma_pagamento %}
+        <tr>
+          <td style="padding-top: 12px;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Forma de Pagamento</span>
+            <div style="font-size: 14px; font-weight: 600; color: #1e293b; margin-top: 2px;">
+              💳 {{ agendamento.forma_pagamento.value }}
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+      </table>
+    </td>
+  </tr>
+
+  <!-- Aviso -->
+  <tr>
+    <td style="background-color: #f1f5f9; border-radius: 8px; padding: 14px 18px; font-size: 13px; color: #64748b; line-height: 1.5; text-align: center;">
+      💡 Acesse sua <strong>agenda</strong> no painel para confirmar, concluir ou gerenciar este atendimento.
+    </td>
+  </tr>
+</table>
+{% endblock %}

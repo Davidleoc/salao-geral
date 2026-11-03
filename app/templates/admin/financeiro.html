@@ -1,0 +1,93 @@
+{# Painel financeiro do SaaS — routes/admin_financeiro.py, cálculos em services/financeiro.py #}
+{% extends "admin/admin_base.html" %}
+{% block title %}Financeiro — Admin SaaS{% endblock %}
+
+{% set NOMES_MES = ['', 'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'] %}
+
+{% block content %}
+<div style="margin-bottom:2rem;">
+  <h1 style="font-size:1.75rem; font-weight:800; color:#1e1b4b;">Financeiro</h1>
+  <p style="color:var(--text-muted); font-size:.95rem;">Receita recorrente, recebimentos, cancelamentos e quem precisa de atenção.</p>
+</div>
+
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin-bottom:2rem;">
+  <div class="kpi-card"><div class="kpi-label">MRR (receita mensal recorrente)</div>
+    <div class="kpi-value" style="color:#166534;">R$ {{ mrr|brl }}</div>
+    <div class="kpi-sub">{{ pagantes }} assinatura(s) pagante(s) · anual ÷ 12</div></div>
+  <div class="kpi-card"><div class="kpi-label">Recebido este mês</div>
+    <div class="kpi-value">R$ {{ recebido_mes|brl }}</div>
+    <div class="kpi-sub">mês passado: R$ {{ recebido_mes_passado|brl }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Em teste grátis</div>
+    <div class="kpi-value" style="color:#155e75;">{{ em_teste }}</div>
+    <div class="kpi-sub">potencial de R$ {{ potencial_testes|brl }}/mês</div></div>
+  <div class="kpi-card"><div class="kpi-label">Cancelamentos no mês</div>
+    <div class="kpi-value" style="color:{{ '#b91c1c' if cancelados_mes else 'inherit' }};">{{ cancelados_mes|length }}</div>
+    <div class="kpi-sub">churn {{ ('%.1f'|format(churn_pct))|replace('.', ',') }}% · mês passado: {{ cancelados_mes_passado }}</div></div>
+  <div class="kpi-card"><div class="kpi-label">Inadimplência</div>
+    <div class="kpi-value" style="color:{{ '#b91c1c' if inadimplentes else 'inherit' }};">{{ inadimplentes|length }}</div>
+    <div class="kpi-sub">R$ {{ valor_inadimplente|brl }}/mês em risco</div></div>
+</div>
+
+<div style="display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap:1.5rem; margin-bottom:1.5rem;" class="grid-fin">
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:1rem;">Recebido por mês</h2>
+    <div class="barra-mes">
+      {% for m in meses %}
+      <div title="R$ {{ m.total|brl }}">
+        <span class="val">{{ (m.total / 1000)|round(1) ~ 'k' if m.total >= 1000 else m.total|int }}</span>
+        <div class="barra" style="height: {{ m.pct }}%;"></div>
+        <span class="rot">{{ NOMES_MES[m.mes.month] }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:1rem;">Vencem nos próximos 7 dias ({{ vencendo|length }})</h2>
+    {% if vencendo %}
+      {% for a in vencendo %}{% set rot = a.status|status_assinatura %}
+      <div style="display:flex; justify-content:space-between; gap:.75rem; padding:.5rem 0; border-bottom:1px solid var(--surface-2); font-size:.9rem;">
+        <span><a href="/admin/saloes/{{ a.salao_id }}" style="font-weight:600;">{{ a.salao.nome }}</a> <span class="badge {{ rot[1] }}" style="font-size:.7rem;">{{ rot[0] }}</span></span>
+        <span style="white-space:nowrap;">{{ a.data_fim.strftime('%d/%m') }} · R$ {{ (a.valor_cobrado or 0)|brl }}</span>
+      </div>
+      {% endfor %}
+    {% else %}<p style="color:var(--text-muted);">Nada vence nesta semana.</p>{% endif %}
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap:1.5rem;" class="grid-fin">
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:.4rem;">Inadimplentes</h2>
+    <p style="font-size:.82rem; color:var(--text-muted); margin-bottom:.9rem;">Em atraso recebem e-mail todo dia; após {{ tolerancia }} dias o salão é suspenso automaticamente.</p>
+    {% if inadimplentes %}
+      {% for a in inadimplentes %}{% set rot = a.status|status_assinatura %}
+      <div style="display:flex; justify-content:space-between; gap:.75rem; padding:.5rem 0; border-bottom:1px solid var(--surface-2); font-size:.9rem;">
+        <span><a href="/admin/saloes/{{ a.salao_id }}" style="font-weight:600;">{{ a.salao.nome }}</a> <span class="badge {{ rot[1] }}" style="font-size:.7rem;">{{ rot[0] }}</span></span>
+        <span style="white-space:nowrap;">venceu {{ a.data_fim.strftime('%d/%m') if a.data_fim else '—' }}{% if a.data_fim %} ({{ (hoje - a.data_fim).days }}d){% endif %}</span>
+      </div>
+      {% endfor %}
+    {% else %}<p style="color:var(--text-muted);">Ninguém em atraso.</p>{% endif %}
+
+    {% if aguardando %}
+    <h3 style="font-size:.95rem; font-weight:700; margin:1.25rem 0 .5rem;">Aguardando primeiro pagamento ({{ aguardando|length }})</h3>
+    {% for a in aguardando %}
+      <div style="display:flex; justify-content:space-between; font-size:.88rem; padding:.3rem 0;">
+        <a href="/admin/saloes/{{ a.salao_id }}">{{ a.salao.nome }}</a><span>R$ {{ (a.valor_cobrado or 0)|brl }}</span></div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:1rem;">Cancelados este mês</h2>
+    {% if cancelados_mes %}
+      {% for a in cancelados_mes %}
+      <div style="display:flex; justify-content:space-between; gap:.75rem; padding:.5rem 0; border-bottom:1px solid var(--surface-2); font-size:.9rem;">
+        <a href="/admin/saloes/{{ a.salao_id }}" style="font-weight:600;">{{ a.salao.nome }}</a>
+        <span>{{ a.cancelada_em.strftime('%d/%m') if a.cancelada_em else '' }} · {{ a.plano.nome if a.plano else '' }}</span>
+      </div>
+      {% endfor %}
+    {% else %}<p style="color:var(--text-muted);">Nenhum cancelamento este mês.</p>{% endif %}
+  </div>
+</div>
+<style>@media (max-width: 900px){ .grid-fin{ grid-template-columns: 1fr !important; } }</style>
+{% endblock %}

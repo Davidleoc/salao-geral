@@ -1,0 +1,78 @@
+{# Agendamento manual pela recepção — routes/agenda.py (criar_agendamento_manual) #}
+{% extends "painel/painel_base.html" %}
+{% block title %}Novo agendamento — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom: 1.75rem;">
+  <div>
+    <h1 style="font-size: 1.5rem; font-weight:800;">Novo agendamento</h1>
+    <p style="color:var(--text-muted);">Para quando o cliente liga ou manda mensagem. O sistema não deixa marcar em cima de outro horário.</p>
+  </div>
+  <a href="/minhaagenda/agenda" class="btn-back">← Voltar para a agenda</a>
+</div>
+
+<div style="max-width: 760px;">
+  <div class="card">
+    <form method="post" action="/minhaagenda/agenda/novo">{{ csrf_input() }}
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="n_servico">Serviço *</label>
+          <select id="n_servico" name="servico_id" class="form-control" required>
+            <option value="">Selecione…</option>
+            {% for s in servicos %}<option value="{{ s.id }}">{{ s.nome }} — R$ {{ s.preco|brl }} ({{ s.duracao_minutos }} min)</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="n_prof">Quem vai atender (opcional)</label>
+          {% if profissionais|length == 1 and not pode('agenda.todos') %}
+            <input class="form-control" value="{{ profissionais[0].nome }} (você)" disabled style="background:var(--surface-2);">
+          {% else %}
+            <select id="n_prof" name="profissional_id" class="form-control">
+              <option value="">Sem profissional definido</option>
+              {% for p in profissionais %}<option value="{{ p.id }}">{{ p.nome }}{% if p.especialidade %} — {{ p.especialidade }}{% endif %}</option>{% endfor %}
+            </select>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group"><label class="form-label" for="n_data">Data *</label>
+          <input type="date" id="n_data" name="data" value="{{ hoje }}" class="form-control" required></div>
+        <div class="form-group"><label class="form-label" for="n_hora">Horário de início *</label>
+          <input type="time" id="n_hora" name="hora_inicio" class="form-control" required step="300"></div>
+      </div>
+
+      <hr class="divider">
+      <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem;">Cliente</h3>
+      <div class="form-group"><label class="form-label" for="n_nome">Nome *</label>
+        <input type="text" id="n_nome" name="nome_cliente" class="form-control" required value="{{ cliente.nome if cliente else '' }}" placeholder="Ex: Ana Clara"></div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group"><label class="form-label" for="n_tel">WhatsApp / telefone *</label>
+          <input type="tel" id="n_tel" name="telefone_cliente" class="form-control" required inputmode="numeric" value="{{ cliente.telefone if cliente else '' }}" placeholder="(11) 98888-7777"></div>
+        <div class="form-group"><label class="form-label" for="n_email">E-mail (opcional)</label>
+          <input type="email" id="n_email" name="email_cliente" class="form-control" value="{{ (cliente.email or '') if cliente else '' }}" placeholder="Para enviar a confirmação"></div>
+      </div>
+
+      <hr class="divider">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group"><label class="form-label" for="n_pag">Forma de pagamento</label>
+          <select id="n_pag" name="forma_pagamento" class="form-control">
+            <option value="">A combinar no local</option><option value="PIX">Pix</option><option value="DINHEIRO">Dinheiro</option>
+            <option value="CREDITO">Cartão de crédito</option><option value="DEBITO">Cartão de débito</option>
+          </select></div>
+        <div class="form-group"><label class="form-label" for="n_status">Status inicial</label>
+          <select id="n_status" name="status" class="form-control">
+            <option value="CONFIRMADO">Confirmado</option><option value="AGENDADO">Agendado (a confirmar)</option>
+          </select></div>
+      </div>
+      <div class="form-group"><label class="form-label" for="n_obs">Observações (opcional)</label>
+        <textarea id="n_obs" name="observacoes" class="form-control" rows="2" placeholder="Ex: preferência por esmalte claro…"></textarea></div>
+
+      <div style="margin-top: 1.25rem; display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">Criar agendamento</button>
+        <a href="/minhaagenda/agenda" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

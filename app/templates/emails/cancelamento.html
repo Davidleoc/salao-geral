@@ -1,0 +1,103 @@
+{% extends "emails/email_base.html" %}
+
+{% block title %}Agendamento Cancelado — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+  <!-- Emblema de Cancelamento -->
+  <tr>
+    <td style="text-align: center; padding-bottom: 20px;">
+      <div style="display: inline-block; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 9999px; padding: 6px 18px; margin-bottom: 12px;">
+        <span style="color: #dc2626; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;">
+          ✕ Agendamento Cancelado
+        </span>
+      </div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.3;">
+        Seu agendamento foi cancelado
+      </h2>
+    </td>
+  </tr>
+
+  <!-- Mensagem de Notificação -->
+  <tr>
+    <td style="padding-bottom: 20px; font-size: 15px; color: #475569; line-height: 1.6;">
+      Olá, <strong>{{ cliente.nome.split()[0] if cliente.nome else 'Cliente' }}</strong>!
+      <br>
+      Informamos que o seu agendamento no <strong>{{ salao.nome }}</strong> foi cancelado.
+    </td>
+  </tr>
+
+  {% if motivo_cancelamento %}
+  <!-- Bloco com Motivo do Cancelamento -->
+  <tr>
+    <td style="padding-bottom: 24px;">
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fff7ed; border-left: 4px solid #f97316; border-radius: 4px; padding: 14px 18px;">
+        <tr>
+          <td>
+            <div style="font-size: 12px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 0.5px;">Motivo informado</div>
+            <div style="font-size: 14px; color: #9a3412; margin-top: 4px; font-style: italic;">
+              "{{ motivo_cancelamento }}"
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% endif %}
+
+  <!-- Resumo do Horário que foi Cancelado -->
+  <tr>
+    <td style="padding-bottom: 28px;">
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="info-box" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px;">
+        <tr>
+          <td style="padding-bottom: 10px;">
+            <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Dados do Horário Cancelado</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding-bottom: 8px;">
+            <strong style="color: #475569; font-size: 14px;">Serviço:</strong>
+            <span style="color: #1e293b; font-size: 14px; font-weight: 600;">{{ servico.nome }}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding-bottom: 8px;">
+            <strong style="color: #475569; font-size: 14px;">Data:</strong>
+            <span style="color: #1e293b; font-size: 14px;">📅 {{ data_formatada }}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding-bottom: 8px;">
+            <strong style="color: #475569; font-size: 14px;">Horário:</strong>
+            <span style="color: #1e293b; font-size: 14px;">⏰ {{ hora_inicio_formatada }}{% if hora_fim_formatada %} às {{ hora_fim_formatada }}{% endif %}</span>
+          </td>
+        </tr>
+        {% if profissional and profissional.nome %}
+        <tr>
+          <td>
+            <strong style="color: #475569; font-size: 14px;">Profissional:</strong>
+            <span style="color: #1e293b; font-size: 14px;">👤 {{ profissional.nome }}</span>
+          </td>
+        </tr>
+        {% endif %}
+      </table>
+    </td>
+  </tr>
+
+  <!-- Botão para Novo Agendamento -->
+  <tr>
+    <td style="text-align: center; padding-bottom: 24px;">
+      <a href="/{{ salao.slug }}" target="_blank" class="button-cta" style="display: inline-block; background-color: {{ cor_primaria }}; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-size: 15px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        Agendar um Novo Horário
+      </a>
+    </td>
+  </tr>
+
+  <!-- Mensagem de Suporte -->
+  <tr>
+    <td style="background-color: #f1f5f9; border-radius: 8px; padding: 14px 18px; font-size: 13px; color: #64748b; line-height: 1.5; text-align: center;">
+      Ficou com alguma dúvida ou precisa de ajuda? Entre em contato diretamente com o salão pelos canais informados no rodapé.
+    </td>
+  </tr>
+</table>
+{% endblock %}

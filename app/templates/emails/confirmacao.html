@@ -1,0 +1,143 @@
+{% extends "emails/email_base.html" %}
+
+{% block title %}Agendamento Confirmado — {{ salao.nome }}{% endblock %}
+
+{% block content %}
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+  <!-- Emblema de Confirmação -->
+  <tr>
+    <td style="text-align: center; padding-bottom: 20px;">
+      <div style="display: inline-block; background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 9999px; padding: 6px 18px; margin-bottom: 12px;">
+        <span style="color: #059669; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;">
+          ✓ Agendamento Confirmado
+        </span>
+      </div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.3;">
+        Tudo certo com o seu horário!
+      </h2>
+    </td>
+  </tr>
+
+  <!-- Mensagem de Saudação -->
+  <tr>
+    <td style="padding-bottom: 24px; font-size: 15px; color: #475569; line-height: 1.6;">
+      Olá, <strong>{{ cliente.nome.split()[0] if cliente.nome else 'Cliente' }}</strong>!
+      <br>
+      Seu agendamento no <strong>{{ salao.nome }}</strong> foi confirmado. Guarde as informações abaixo para o seu atendimento:
+    </td>
+  </tr>
+
+  <!-- Card de Detalhes do Agendamento -->
+  <tr>
+    <td style="padding-bottom: 28px;">
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="info-box" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 22px;">
+        <!-- Serviço -->
+        <tr>
+          <td style="padding-bottom: 14px; border-bottom: 1px solid #edf2f7;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Serviço</span>
+            <div style="font-size: 16px; font-weight: 700; color: #1e293b; margin-top: 2px;">
+              {{ servico.nome }}
+            </div>
+            {% if servico.descricao %}
+              <div style="font-size: 12px; color: #64748b; margin-top: 2px;">{{ servico.descricao }}</div>
+            {% endif %}
+          </td>
+        </tr>
+
+        <!-- Data e Horário -->
+        <tr>
+          <td style="padding: 14px 0; border-bottom: 1px solid #edf2f7;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td width="50%" style="vertical-align: top;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Data</span>
+                  <div style="font-size: 15px; font-weight: 600; color: #1e293b; margin-top: 2px;">
+                    📅 {{ data_formatada }}
+                  </div>
+                </td>
+                <td width="50%" style="vertical-align: top;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Horário</span>
+                  <div style="font-size: 15px; font-weight: 600; color: #1e293b; margin-top: 2px;">
+                    ⏰ {{ hora_inicio_formatada }}{% if hora_fim_formatada %} às {{ hora_fim_formatada }}{% endif %}
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Profissional e Valor -->
+        <tr>
+          <td style="padding: 14px 0; border-bottom: 1px solid #edf2f7;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td width="50%" style="vertical-align: top;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Profissional</span>
+                  <div style="font-size: 14px; font-weight: 600; color: #1e293b; margin-top: 2px;">
+                    👤 {{ profissional.nome if (profissional and profissional.nome) else 'Equipe do salão' }}
+                  </div>
+                </td>
+                <td width="50%" style="vertical-align: top;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Valor Total</span>
+                  <div style="font-size: 16px; font-weight: 800; color: {{ cor_primaria }}; margin-top: 2px;">
+                    {{ valor_formatado }}
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Localização -->
+        <tr>
+          <td style="padding-top: 14px;{% if agendamento.observacoes %} border-bottom: 1px solid #edf2f7; padding-bottom: 14px;{% endif %}">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Local de Atendimento</span>
+            <div style="font-size: 14px; font-weight: 600; color: #1e293b; margin-top: 2px;">
+              {{ salao.nome }}
+            </div>
+            {% if salao.endereco %}
+              <div style="font-size: 13px; color: #64748b; margin-top: 2px;">
+                {{ salao.endereco }}{% if salao.cidade %} — {{ salao.cidade }}/{{ salao.estado }}{% endif %}
+              </div>
+            {% endif %}
+          </td>
+        </tr>
+
+        {% if agendamento.observacoes %}
+        <!-- Observações do Cliente -->
+        <tr>
+          <td style="padding-top: 14px;">
+            <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Observações</span>
+            <div style="font-size: 13px; color: #475569; margin-top: 2px; font-style: italic;">
+              "{{ agendamento.observacoes }}"
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+      </table>
+    </td>
+  </tr>
+
+  <!-- Botão de Ação / Contato -->
+  <tr>
+    <td style="text-align: center; padding-bottom: 24px;">
+      {% if salao.whatsapp %}
+        <a href="https://wa.me/55{{ salao.whatsapp.replace('(', '').replace(')', '').replace('-', '').replace(' ', '') }}" target="_blank" class="button-cta" style="display: inline-block; background-color: {{ cor_primaria }}; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-size: 15px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          Conversar no WhatsApp com o Salão
+        </a>
+      {% else %}
+        <a href="/{{ salao.slug }}" target="_blank" class="button-cta" style="display: inline-block; background-color: {{ cor_primaria }}; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-size: 15px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          Ver Página do Salão
+        </a>
+      {% endif %}
+    </td>
+  </tr>
+
+  <!-- Aviso de Reagendamento / Cancelamento -->
+  <tr>
+    <td style="background-color: #f1f5f9; border-radius: 8px; padding: 14px 18px; font-size: 13px; color: #64748b; line-height: 1.5; text-align: center;">
+      💡 <strong>Dica importante:</strong> Se não puder comparecer, solicitamos a gentileza de avisar com antecedência para liberar a vaga a outro cliente.
+    </td>
+  </tr>
+</table>
+{% endblock %}

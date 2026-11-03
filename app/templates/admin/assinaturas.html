@@ -1,0 +1,63 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Assinaturas e cobranças — Admin SaaS{% endblock %}
+
+{% from "admin/_acoes_assinatura.html" import acoes with context %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <h1 style="font-size:1.75rem; font-weight:800; color:#1e1b4b; letter-spacing:-0.5px;">Assinaturas e cobranças</h1>
+    <p style="color:var(--text-muted); font-size:.95rem;">Testes grátis aparecem em <span class="badge badge-teste">ciano</span>. Avisos de vencimento, atraso e suspensão saem sozinhos por e-mail.</p>
+  </div>
+  <a href="/admin/financeiro" class="btn btn-outline">Painel financeiro →</a>
+</div>
+
+<div style="display:flex; gap:.5rem; margin-bottom:1.75rem; flex-wrap:wrap;">
+  <a href="/admin/assinaturas" class="btn btn-sm {{ 'btn-primary' if not status_filtro else 'btn-outline' }}" style="padding:.45rem 1rem;">Todas ({{ total_count }})</a>
+  {% for f in filtros %}
+    {% set rot = f|status_assinatura %}
+    <a href="/admin/assinaturas?status_filtro={{ f }}" class="btn btn-sm {{ 'btn-primary' if status_filtro == f else 'btn-outline' }}" style="padding:.45rem 1rem;">{{ rot[0] }} ({{ contagens.get(f, 0) }})</a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  {% if assinaturas %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Salão</th><th>Plano</th><th>Valor</th><th>Situação</th><th>Vencimento</th><th style="text-align:right; min-width:260px;">Ações</th></tr></thead>
+        <tbody>
+          {% for a in assinaturas %}
+          {% set rot = a.status|status_assinatura %}
+          <tr class="{{ 'linha-teste' if a.status.value == 'TESTE' else ('linha-atraso' if a.status.value in ('EM_ATRASO', 'SUSPENSO') else '') }}">
+            <td>
+              <a href="/admin/saloes/{{ a.salao_id }}" style="font-weight:700; color:#1e1b4b;">{{ a.salao.nome if a.salao else 'Salão #' ~ a.salao_id }}</a>
+              <div style="font-size:.78rem; color:var(--text-muted);">desde {{ a.criado_em.strftime('%d/%m/%Y') if a.criado_em else '-' }}</div>
+            </td>
+            <td><span class="badge badge-purple">{{ a.plano.nome if a.plano else '-' }}</span>
+              <div style="font-size:.78rem; color:var(--text-muted);">{{ 'Anual' if a.periodicidade.value == 'ANUAL' else 'Mensal' }}</div></td>
+            <td style="font-weight:700;">R$ {{ (a.valor_cobrado or 0)|brl }}</td>
+            <td><span class="badge {{ rot[1] }}">{{ rot[0] }}</span></td>
+            <td style="font-size:.85rem;">
+              {% if a.data_fim %}
+                {% set dias = (a.data_fim - hoje).days %}
+                <b>{{ a.data_fim.strftime('%d/%m/%Y') }}</b>
+                <div style="font-size:.76rem; color:{{ '#b91c1c' if dias < 0 else 'var(--text-muted)' }};">
+                  {% if dias < 0 %}há {{ -dias }} dia(s){% elif dias == 0 %}hoje{% else %}em {{ dias }} dia(s){% endif %}
+                  {% if a.status.value == 'TESTE' %} · fim do teste{% endif %}
+                </div>
+              {% elif a.status.value == 'TESTE' %}
+                <span style="color:var(--text-muted);">aguardando confirmar e-mail</span>
+              {% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+            </td>
+            <td style="text-align:right;">{{ acoes(a, '/admin/assinaturas' ~ ('?status_filtro=' ~ status_filtro if status_filtro else '')) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="padding:3.5rem 1rem; text-align:center; color:var(--text-muted);">Nenhuma assinatura nesta categoria.</div>
+  {% endif %}
+</div>
+{% endblock %}
